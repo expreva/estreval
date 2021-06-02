@@ -1,6 +1,6 @@
 {
-  "name": "jeva",
-  "version": "1.3.3",
+  "name": "@expreva/jeva",
+  "version": "1.4.0",
   "description": "Safely evalulate JavaScript",
   "main": "index.js",
   "scripts": {
