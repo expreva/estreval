@@ -65,6 +65,12 @@ test('function declaration', function(t){
   t.end()
 })
 
+test('arrow function declaration', function(t){
+  var code = 'var test = (arg) => { return arg }; test(123)';
+  t.deepEqual(run(code), 123);
+  t.end()
+})
+
 test('this', function(t){
   t.equal(run('this', {this: 'test'}), 'test')
   t.equal(run('this'), undefined)

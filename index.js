@@ -87,6 +87,7 @@ function evaluateAst(tree, context){
         return context[node.id.name] = value
 
       case 'FunctionExpression':
+      case 'ArrowFunctionExpression':
         var params = node.params.map(getName)
 
         // HACK: trace the function name for stack traces
@@ -520,6 +521,7 @@ function getFunction(body, params, parentContext, traceNode){
       if (result instanceof ReturnValue){
         return result.value
       }
+      return result
     } catch (ex) {
       ex.trace = ex.trace || []
       ex.trace.push(traceNode)
