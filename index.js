@@ -8,7 +8,7 @@ safeEval.createFunction = FunctionFactory()
 
 module.exports = safeEval
 
-let maxIterations = 1000000
+let maxIterations = 10000
 
 // 'eval' with a controlled environment
 function safeEval(src = '', parentContext){
@@ -169,7 +169,7 @@ function evaluateAst(tree, context){
         } else if (node.alternate) {
           return walk(node.alternate)
         }
-        // @eslint-ignore no-fallthrough
+        return
       case 'ForStatement':
         var infinite = InfiniteChecker(maxIterations)
         var result = undefined
