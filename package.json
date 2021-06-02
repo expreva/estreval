@@ -4,6 +4,8 @@
   "description": "Safely evalulate JavaScript",
   "main": "index.js",
   "scripts": {
+    "build": "esbuild index.js --bundle --format=cjs --outfile=build/index.js && esbuild index.js --bundle --minify --sourcemap --format=iife --global-name=jeva --outfile=build/jeva.min.js",
+    "dev": "esbuild index.js --bundle --format=cjs --outfile=build/index.js --watch",
     "test": "tape test/*.js"
   },
   "repository": {
@@ -26,6 +28,7 @@
     "esprima": "^4.0"
   },
   "devDependencies": {
+    "esbuild": "^0.12.5",
     "tape": "^5.2.2"
   }
 }
