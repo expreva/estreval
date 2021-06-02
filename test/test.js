@@ -215,3 +215,9 @@ test('switch statement', function(t){
   t.equal(run('function x(y) { switch(y) { case 1: return 1; case 2: return 2} } x(1)'), 1)
   t.end()
 })
+
+test('template string', function (t) {
+  var context = { foo: 'hello', bar: 'world' }
+  t.equal(run('`${foo} ${bar} !`', context), 'hello world !')
+  t.end()
+})

@@ -257,6 +257,18 @@ function evaluateAst(tree, context){
       case 'Literal':
         return node.value
 
+      case 'TemplateElement':
+        return node.value.raw
+
+      case 'TemplateLiteral':
+        return node.quasis.map((x, i) => {
+          let element = walk(x)
+          if (x.tail) return element
+          let exp = walk(node.expressions[i])
+          return element + exp
+        }).join('')
+
+
       case 'UnaryExpression':
         if (node.operator === 'delete' && node.argument.type === 'MemberExpression') {
           var arg = node.argument
