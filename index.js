@@ -1,18 +1,17 @@
-var parse = require('esprima').parse
+const { parse } = require('esprima')
 
-var hoist = require('./lib/hoister')
-var InfiniteChecker = require('./lib/infinite-checker')
-var Primitives = require('./lib/primitives')
+const hoist = require('./lib/hoister')
+const InfiniteChecker = require('./lib/infinite-checker')
+const Primitives = require('./lib/primitives')
+
+safeEval.createFunction = FunctionFactory()
 
 module.exports = safeEval
-module.exports.eval = safeEval
-module.exports.FunctionFactory = FunctionFactory
-module.exports.Function = FunctionFactory()
 
-var maxIterations = 1000000
+let maxIterations = 1000000
 
 // 'eval' with a controlled environment
-function safeEval(src, parentContext){
+function safeEval(src = '', parentContext){
   var tree = prepareAst(src)
   var context = Object.create(parentContext || {})
   return finalValue(evaluateAst(tree, context))
@@ -27,7 +26,7 @@ function FunctionFactory(parentContext){
     var src = args.slice(-1)[0]
     args = args.slice(0, -1)
     if (typeof src === 'string'){
-      //HACK: esprima doesn't like returns outside functions
+      // Support return outside functions
       src = parse('function a(){' + src + '}').body[0].body
     }
     var tree = prepareAst(src)
