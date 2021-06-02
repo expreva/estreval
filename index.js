@@ -343,6 +343,12 @@ function evaluateAst(tree, context){
         }
 
       case 'CallExpression':
+        if (node.callee) {
+          if (node.callee.type === 'NewExpression') {
+            node.callee.arguments = [];
+          }
+        }
+
         var args = node.arguments.map(function(arg){
           return walk(arg)
         })
