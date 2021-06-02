@@ -111,7 +111,11 @@ test('prevent access to Function via function call (bound)', function(t){
 })
 
 test('prevent access to Function prototype', function(t){
-  safeEval("try{a[b];}catch(e){e.constructor.constructor('return __proto__.arguments.callee.__proto__.polluted=true')()};")
+  try {
+    safeEval("try{a[b];}catch(e){e.constructor.constructor('return __proto__.arguments.callee.__proto__.polluted=true')()};")
+  } catch(e) {
+    // @eslint-ignore no-empty
+  }
   t.equal(Function.polluted, undefined)
   t.end()
 })

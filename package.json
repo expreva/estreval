@@ -25,7 +25,7 @@
     "url": "https://github.com/expreva/jeva/issues"
   },
   "dependencies": {
-    "esprima": "^4.0"
+    "meriyah": "^4.1.5"
   },
   "devDependencies": {
     "esbuild": "^0.12.5",

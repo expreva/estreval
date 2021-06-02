@@ -1,4 +1,4 @@
-const { parse } = require('esprima')
+const { parseScript: parse } = require('meriyah')
 
 const hoist = require('./lib/hoister')
 const InfiniteChecker = require('./lib/infinite-checker')
@@ -9,6 +9,61 @@ safeEval.createFunction = FunctionFactory()
 module.exports = safeEval
 
 let maxIterations = 10000
+
+// From https://github.com/meriyah/meriyah#api
+const parserOptions = {
+
+  // The flag to allow module code
+  module: false,
+
+  // The flag to enable stage 3 support (ESNext)
+  next: false,
+
+  // The flag to enable start, end offsets and range: [start, end] to each node
+  ranges: false,
+
+  // Enable web compatibility
+  webcompat: false,
+
+  // The flag to enable line/column location information to each node
+  loc: false,
+
+  // The flag to attach raw property to each literal and identifier node
+  raw: false,
+
+  // Enabled directives
+  directives: false,
+
+  // The flag to allow return in the global scope
+  globalReturn: true,
+
+  // The flag to enable implied strict mode
+  impliedStrict: false,
+
+  // Allows comment extraction. Accepts either a function or array
+  onComment: [],
+
+  // Allows token extraction. Accepts either a function or array
+  onToken: [],
+
+  // Enable non-standard parenthesized expression node
+  preserveParens: false,
+
+  // Enable lexical binding and scope tracking
+  lexical: false,
+
+  // Adds a source attribute in every node’s loc object when the locations option is `true`
+  source: false,
+
+  // Distinguish Identifier from IdentifierPattern
+  identifierPattern: false,
+
+  // Enable React JSX parsing
+  jsx: true,
+
+  // Allow edge cases that deviate from the spec
+  specDeviation: false
+}
 
 // 'eval' with a controlled environment
 function safeEval(src = '', parentContext){
@@ -25,10 +80,6 @@ function FunctionFactory(parentContext){
     var args = Array.prototype.slice.call(arguments)
     var src = args.slice(-1)[0]
     args = args.slice(0, -1)
-    if (typeof src === 'string'){
-      // Support return outside functions
-      src = parse('function a(){' + src + '}').body[0].body
-    }
     var tree = prepareAst(src)
     return getFunction(tree, args, context)
   }
@@ -36,7 +87,7 @@ function FunctionFactory(parentContext){
 
 // takes an AST or js source and returns an AST
 function prepareAst(src){
-  var tree = (typeof src === 'string') ? parse(src, { loc: true }) : src
+  var tree = (typeof src === 'string') ? parse(src, parserOptions) : src
   return hoist(tree)
 }
 
