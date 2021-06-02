@@ -1,14 +1,14 @@
 {
-  "name": "notevil",
+  "name": "jeva",
   "version": "1.3.3",
-  "description": "Evalulate javascript like the built-in eval() method but safely",
+  "description": "Safely evalulate JavaScript",
   "main": "index.js",
   "scripts": {
     "test": "tape test/*.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mmckegg/notevil"
+    "url": "https://github.com/expreva/jeva"
   },
   "keywords": [
     "eval",
@@ -17,10 +17,10 @@
     "safe",
     "expression"
   ],
-  "author": "Matt McKegg",
+  "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mmckegg/notevil/issues"
+    "url": "https://github.com/expreva/jeva/issues"
   },
   "dependencies": {
     "esprima": "^4.0"
