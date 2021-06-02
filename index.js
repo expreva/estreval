@@ -358,7 +358,7 @@ function evaluateAst(tree, context){
       case 'CallExpression':
         if (node.callee) {
           if (node.callee.type === 'NewExpression') {
-            node.callee.arguments = [];
+            node.callee.arguments = []
           }
         }
 
@@ -368,6 +368,9 @@ function evaluateAst(tree, context){
         var object = null
         var target = walk(node.callee)
 
+        if (typeof target !== 'function') {
+          throw new TypeError(node.callee.name + ' is not a function')
+        }
         if (node.callee.type === 'MemberExpression'){
           object = walk(node.callee.object)
         }
