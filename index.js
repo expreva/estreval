@@ -10,7 +10,7 @@ module.exports = safeEval
 
 let maxIterations = 10000
 
-// From https://github.com/meriyah/meriyah#api
+// See https://github.com/meriyah/meriyah#api
 const parserOptions = {
 
   // The flag to allow module code
@@ -26,7 +26,7 @@ const parserOptions = {
   webcompat: false,
 
   // The flag to enable line/column location information to each node
-  loc: false,
+  loc: true,
 
   // The flag to attach raw property to each literal and identifier node
   raw: false,
@@ -38,13 +38,13 @@ const parserOptions = {
   globalReturn: true,
 
   // The flag to enable implied strict mode
-  impliedStrict: false,
+  impliedStrict: true,
 
   // Allows comment extraction. Accepts either a function or array
-  onComment: [],
+  // onComment: [],
 
   // Allows token extraction. Accepts either a function or array
-  onToken: [],
+  // onToken: [],
 
   // Enable non-standard parenthesized expression node
   preserveParens: false,
