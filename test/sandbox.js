@@ -1,4 +1,4 @@
-var safeEval = require('../')
+var run = require('../')
 var test = require('tape')
 
 test('this and global', function(t){
@@ -13,7 +13,7 @@ test('attempt override prototype method', function(t){
   var original = Array.prototype.map
   var code = 'Array.prototype.map = function(){ return "HACK" }'
   t.throws(function(){
-    safeEval(code, {
+    run(code, {
       Array: Array
     })
   }, 'original array prototype untouched')
@@ -24,7 +24,7 @@ test('attempt override prototype method', function(t){
 test('attempt to set __proto__', function(t){
   var x = ['test']
   var original = Object.getPrototypeOf(x)
-  safeEval('x.__proto__ = {newProto: true}', {
+  run('x.__proto__ = {newProto: true}', {
     x: original
   })
   t.equal(Object.getPrototypeOf(x), original, '__proto__ not changed')
@@ -33,34 +33,34 @@ test('attempt to set __proto__', function(t){
 })
 
 test('try to access this via constructor', function(t){
-  var result = safeEval("[].slice.constructor('return this')()")
+  var result = run("[].slice.constructor('return this')()")
   t.equal(result, undefined)
   t.end()
 })
 
 test('try to access this via constructor and bind', function(t){
-  var result = safeEval("[].slice.constructor.bind()('return this')()")
+  var result = run("[].slice.constructor.bind()('return this')()")
   t.equal(result, undefined)
   t.end()
 })
 
 test('infinite recursion', function(t){
   t.throws(function(){
-    safeEval('function test() { test() }; test()')
+    run('function test() { test() }; test()')
   })
   t.end()
 })
 
 test('infinite for loop', function(t){
   t.throws(function(){
-    safeEval('for (;true;){}')
+    run('for (;true;){}')
   })
   t.end()
 })
 
 test('infinite while loop', function(t){
   t.throws(function(){
-    safeEval('while (true){}')
+    run('while (true){}')
   })
   t.end()
 })
@@ -68,7 +68,7 @@ test('infinite while loop', function(t){
 test('set wrapped string prototype', function(t){
   var code = 'String.prototype.makeLouder = function() { return this + "!" }; "test".makeLouder()'
   t.throws(function(){
-    safeEval(code)
+    run(code)
   }, 'original string prototype untouched')
   t.end()
 })
@@ -76,7 +76,7 @@ test('set wrapped string prototype', function(t){
 test('set wrapped object prototype', function(t){
   var code = 'Object.prototype.wibblify = function() { return "~" + this.value + "~" }; ({value: "test"}).wibblify()'
   t.throws(function(){
-    safeEval(code)
+    run(code)
   }, 'original object prototype untouched')
   t.end()
 })
@@ -99,8 +99,8 @@ test('prevent access to Function via function call', function(t){
     "properties.pop();" +
     "var Function = properties.pop();" +
     "(Function('return this'))()"
-  t.notEqual(safeEval(code), global)
-  t.equal(safeEval(code), undefined)
+  t.notEqual(run(code), global)
+  t.equal(run(code), undefined)
   t.end()
 })
 
@@ -114,14 +114,14 @@ test('prevent access to Function via function call (bound)', function(t){
     "properties.pop();" +
     "var Func = properties.map(function (x) {return x.bind(x, 'return this')}).pop();" +
     "(Func())()"
-  t.notEqual(safeEval(code), global)
-  t.equal(safeEval(code), undefined)
+  t.notEqual(run(code), global)
+  t.equal(run(code), undefined)
   t.end()
 })
 
 test('prevent access to Function prototype', function(t){
   try {
-    safeEval("try{a[b];}catch(e){e.constructor.constructor('return __proto__.arguments.callee.__proto__.polluted=true')()};")
+    run("try{a[b];}catch(e){e.constructor.constructor('return __proto__.arguments.callee.__proto__.polluted=true')()};")
   } catch(e) {
     // @eslint-ignore no-empty
   }

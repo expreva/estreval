@@ -17,17 +17,17 @@ test('set and use variable', function(t){
 })
 
 test('if statement', function(t){
-  t.equal(run('if (x == 3) {"cats"} else {"dogs"} ', {x: 3}), "cats")
+  t.equal(run('if (x == 3) {"cats"} else {"dogs"} ', { x: 3 }), "cats")
   t.end()
 })
 
 test('ternary operator', function(t){
-  t.equal(run('x == 3 ? "cats" : "dogs"', {x: 3}), "cats")
+  t.equal(run('x == 3 ? "cats" : "dogs"', { x: 3 }), "cats")
   t.end()
 })
 
 test('update context', function(t){
-  var context = { x: 1, o: {val: 10} }
+  var context = { x: 1, o: { val: 10 } }
   run('var key = "val"; x = 4 * 4; o[key] = 20', context)
   t.equal(context.x, 16)
   t.equal(context.o.val, 20)
@@ -35,14 +35,14 @@ test('update context', function(t){
 })
 
 test('include some globals', function(t){
-  t.equal(run('JSON.stringify({test: 123})', {JSON: JSON}), JSON.stringify({test: 123}))
+  t.equal(run('JSON.stringify({test: 123})', { JSON: JSON }), JSON.stringify({ test: 123 }))
   t.end()
 })
 
 
 test('object', function(t){
-  t.deepEqual(run('x = {"test": 1}'), {test: 1})
-  t.deepEqual(run('x = {test: -1}'), {test: -1})
+  t.deepEqual(run('x = {"test": 1}'), { test: 1 })
+  t.deepEqual(run('x = {test: -1}'), { test: -1 })
   t.end()
 })
 
@@ -66,8 +66,8 @@ test('function declaration', function(t){
 })
 
 test('arrow function declaration', function(t){
-  var code = 'var test = (arg) => { return arg }; test(123)';
-  t.deepEqual(run(code), 123);
+  var code = 'var test = (arg) => { return arg }; test(123)'
+  t.deepEqual(run(code), 123)
   t.end()
 })
 
@@ -101,7 +101,7 @@ test('typeof', function(t){
 })
 
 test('instanceof', function(t){
-  t.equal(run('var obj = {}; obj instanceof Object', {Object: Object}), true)
+  t.equal(run('var obj = {}; obj instanceof Object', { Object: Object }), true)
   t.end()
 })
 
@@ -162,13 +162,13 @@ test('early return', function(t){
 
 test('continue', function(t){
   var code = 'var result = []; for (var i=0;i<5;i++){ if (i === 2){ continue } result.push(i) }; result'
-  t.deepEqual(run(code), [0,1,3,4])
+  t.deepEqual(run(code), [0, 1, 3, 4])
   t.end()
 })
 
 test('break', function(t){
   var code = 'var result = []; for (var i=0;i<5;i++){ if (i === 3){ break } result.push(i) }; result'
-  t.deepEqual(run(code), [0,1,2])
+  t.deepEqual(run(code), [0, 1, 2])
   t.end()
 })
 
@@ -220,10 +220,10 @@ test('try statement', function(t){
 
 test('switch statement', function(t){
   var code = 'var r = []; switch (x) { case 1: r.push(1); break; case 2: r.push(2); case 3: r.push(3); break; default: r.push("default") } r'
-  t.deepEqual(run(code, {x: 1}), [1])
-  t.deepEqual(run(code, {x: 2}), [2, 3])
-  t.deepEqual(run(code, {x: 3}), [3])
-  t.deepEqual(run(code, {x: 4}), ['default'])
+  t.deepEqual(run(code, { x: 1 }), [1])
+  t.deepEqual(run(code, { x: 2 }), [2, 3])
+  t.deepEqual(run(code, { x: 3 }), [3])
+  t.deepEqual(run(code, { x: 4 }), ['default'])
 
   t.equal(run('function x(y) { switch(y) { case 1: return 1; case 2: return 2} } x(1)'), 1)
   t.end()
