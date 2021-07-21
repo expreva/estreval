@@ -235,6 +235,48 @@ if (typeof Reflect !== 'undefined') {
 
 const globalOrWindow = typeof window!=='undefined' ? window : global
 
+// Used in classExpressionHandler
+
+function setKeyVal(_this, item, val){
+  let keyval
+  let sbl = false
+  if(item.name.computed){
+    let t = (item.name.value)()
+    if(isSymbol(t)){
+      sbl = true
+      keyval = storeKey(t)
+    }else{
+      keyval = t
+    }
+  }else{
+    keyval = item.name.value
+  }
+  if(sbl){
+    Object.defineProperty(_this, keyval, {
+      value: val,
+      writable: true,
+      enumerable: false,
+      configurable: true,
+    })
+  }else{
+    _this[keyval] = val
+  }
+}
+
+let extendStatics = function (d, b) {
+  // ?!
+  extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b }) ||
+        function (d, b) { for (var p in b) if (hasOwnProperty.call(b, p)) d[p] = b[p] }
+  return extendStatics(d, b)
+}
+
+function __extend(child, father) {
+  extendStatics(child, father)
+  function __() { this.constructor = father }
+  child.prototype = father === null ? Object.create(father) : (__.prototype = father.prototype, new __())
+}
+
 
 class Interpreter {
 
@@ -478,15 +520,15 @@ class Interpreter {
   createClosure(node) {
     let closure
     switch (node.type) {
-    // case 'ClassDeclaration':
-    //   closure = this.classDeclarationHandler(node)
-    //   break
-    // case 'ClassExpression':
-    //   closure = this.classExpressionHandler(node)
-    //   break
-    // case 'Super':
-    //   closure = this.superHandler(node)
-    //   break
+    case 'ClassDeclaration':
+      closure = this.classDeclarationHandler(node)
+      break
+    case 'ClassExpression':
+      closure = this.classExpressionHandler(node)
+      break
+    case 'Super':
+      closure = this.superHandler(node)
+      break
     case 'BinaryExpression':
       closure = this.binaryExpressionHandler(node)
       break
@@ -1238,6 +1280,7 @@ class Interpreter {
         configurable: true,
         enumerable: false,
       })
+
       Object.defineProperty(func, "valueOf", {
         value: () => {
           return source.slice(node.start, node.end)
@@ -2370,6 +2413,184 @@ class Interpreter {
     }
   }
 
+  classDeclarationHandler(node) {
+    let className
+    let classClosure
+    // The scope of the class is the block-level scope
+    if (node.id) {
+      classClosure = this.classExpressionHandler(node)
+      let stackTop = this.collectDeclLex[this.collectDeclLex.length - 1]
+      stackTop && (stackTop[node.id.name] = {
+        init: false,
+        kind: 'let'
+      })
+      className = node.id.name
+    }
+    return () => {
+      const closure = classClosure()
+      if (className) {
+        let scope = this.getCurrentScope()
+        scope.lexDeclared[className].init = true
+        scope.data[className] = closure
+      }
+      return closure // EmptyStatementReturn
+    }
+  }
+
+  classExpressionHandler(node) {
+
+    const className = node.id ? node.id.name : "" /**anonymous*/
+
+    let classDecl = {
+      // cons?: BaseClosure
+      // We treat static properties equally, whether they are properties or methods.
+      // Just assign it directly to the class.
+      static: [],
+      // Some methods on the instance this. If these methods are arrow functions,
+      // they need to be self-bound; if they are general functions, they don’t need
+      // to be self-bound.
+      fieldsArrow: [], // seeyouagain[]
+      // General attributes placed on the instance this
+      fieldsProperty: [], // seeyouagain[]
+      // Instance method on prototype
+      method: [], // seeyouagain[]
+    }
+
+    let superClass = node.superClass ? this.createClosure(node.superClass) : null
+
+    node.body.body.forEach(item=>{
+      if(item.type === 'MethodDefinition'){
+        // Focus on these attributes: kind/static/computed
+        if(item.kind === 'constructor'){
+          classDecl.cons = this.createClosure(item.value)
+        } else if(item.kind === 'method') {
+          classDecl[item.static?'static':'method'].push({
+            name: {
+              computed: item.computed,
+              value: item.computed?this.createClosure(item.key):item.key.name
+            },
+            value: this.createClosure(item.value)
+          })
+        } else if(item.kind === 'get' || item.kind === 'set') {
+          // The setter and getter of the class are not supported
+          throw this.createInternalThrowError(Messages.NormalError, 'not support getter and setter in class', node)
+        }
+      } else if(item.type === 'FieldDefinition' || item.type === 'PropertyDefinition') {
+
+        // Follow static/computed
+        if (item.static) {
+          classDecl.static.push({
+            name: {
+              computed: item.computed,
+              // @ts-ignore
+              value: item.computed?this.createClosure(item.key):item.key.name
+            },
+            value: this.createClosure(item.value)
+          })
+        } else {
+          // If it is an arrow function, special self-binding is required, and the
+          // rest (attributes or function functions) do not need to be processed
+          let t = item.value.type == 'ArrowFunctionExpression'
+            ? 'fieldsArrow'
+            : 'fieldsProperty'
+
+          classDecl[t].push({
+            name: {
+              computed: item.computed,
+              // @ts-ignore
+              value: item.computed?this.createClosure(item.key):item.key.name
+            },
+            value: this.createClosure(item.value)
+          })
+        }
+      } else {
+        throw this.createInternalThrowError(Messages.NormalError, 'unknown class body type '+item.type, node.body)
+      }
+    })
+
+
+    return () => {
+      let self = this
+      let _super = superClass ? superClass() : null
+      let cons
+      // If there is a parent class and there is a displayed constructor declaration,
+      // the super variable should be injected when constructing the constructor
+      if(_super && classDecl.cons){
+        let newScope = createScope(this.getCurrentScope(), `FScope(constructor)`, 'block')
+        newScope.lexDeclared = {
+          super: {
+            kind: 'const',
+            init: true
+          }
+        }
+        newScope.data['super'] = _super
+        let prevScope = this.entryBlockScope(newScope)
+        cons = classDecl.cons()
+        this.setCurrentScope(prevScope)
+      }else{
+        cons = classDecl.cons?classDecl.cons():null
+      }
+
+      let func = function(){
+        let _this = this
+        if(superClass && !cons){
+          _this = _super.call(_this) || _this
+        }
+        // Bind the field attribute first, and then execute the constructor
+        classDecl.fieldsArrow.forEach(item=>{
+          let prev = self.getCurrentContext()
+          self.setCurrentContext(_this)
+          let fn = item.value()
+          self.setCurrentContext(prev)
+          setKeyVal(_this, item, fn)
+          // _this[item.name.computed?(item.name.value )():item.name.value] = fn
+        })
+
+        classDecl.fieldsProperty.forEach(item=>{
+          setKeyVal(_this, item, item.value())
+          // _this[item.name.computed?(item.name.value )():item.name.value] = item.value()
+        })
+        if(cons){
+          cons.apply(_this, arguments)
+        }
+        return _this
+      }
+
+      superClass && __extend(func, _super)
+
+      classDecl.method.forEach(item=>{
+        func.prototype[item.name.computed?(item.name.value )():item.name.value] = item.value()
+      })
+
+      classDecl.static.forEach(item=>{
+        func[item.name.computed?(item.name.value )():item.name.value] = item.value()
+      })
+
+      if (className) {
+        Object.defineProperty(func, "name", {
+          value: className,
+          writable: false,
+          enumerable: false,
+          configurable: true,
+        })
+      }
+
+      return func
+    }
+  }
+
+  superHandler(node) {
+    return () => {
+      const currentScope = this.getCurrentScope()
+      const data = this.getScopeDataFromName('super', currentScope)
+      // TODO: In fact, you have to verify whether it is your own super, because the
+      // scope chain looks up, and you may find super variables that are completely unrelated
+      // to your superiors. There are not many cases in which you can temporarily postpone
+      // the repair.
+      this.assertVariable(data, 'super', node)
+      return data['super']
+    }
+  }
 
   // ===================== Utilities =====================
 

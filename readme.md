@@ -77,8 +77,7 @@ Enter `.reload` in the REPL to reload the library after editing its files.
 
 Beyond ES5
 
-- [ ] SpreadElement
-- ? Class
+- [x] Class
 - ? Async / await
 
 ## References
