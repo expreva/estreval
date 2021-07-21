@@ -1,6 +1,14 @@
 var safeEval = require('../')
 var test = require('tape')
 
+test('this and global', function(t){
+  t.notEqual(run('this'), global, 'this is not global')
+  t.throws(function() {
+    run('global') // Error: global is not defined
+  })
+  t.end()
+})
+
 test('attempt override prototype method', function(t){
   var original = Array.prototype.map
   var code = 'Array.prototype.map = function(){ return "HACK" }'
