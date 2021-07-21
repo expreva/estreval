@@ -23,6 +23,19 @@ const context = { x: 3 }
 estreval('y => x * y', context)(5) // 15
 ```
 
+## Options
+
+The main function's third argument is an `options` object (optional).
+
+```js
+estreval(code, context, options)
+```
+
+It can have the following properties.
+
+- `timeout` - Maximum amount of time (in milliseconds) allowed for the code - Default: 100
+- `maxSteps` - Maximum number of steps allowed for the code - Default: 1024
+
 ## Default parser
 
 The default parser uses [Acorn](https://github.com/acornjs/acorn).
@@ -53,10 +66,6 @@ evaluate(tree, context, options)(5) // 15
 ```
 
 The parse function can be passed as the `parse` property in the optional third argument `options`.  It will be used when new instances of `Function` are created inside the runtime. Otherwise, the use of `Function` will throw an error.
-
-## Options
-
-The evaluate
 
 ## Develop
 
