@@ -6,7 +6,8 @@
   "scripts": {
     "build": "esbuild index.js --bundle --minify --sourcemap --format=iife --global-name=estreval --outfile=build/estreval.min.js",
     "dev": "concurrently --raw 'esbuild index.js --bundle --sourcemap --format=iife --global-name=estreval --outfile=build/estreval.min.js --watch' 'serve --no-clipboard'",
-    "test": "tape test/*.js"
+    "test": "tape test/*.js",
+    "release": "npm publish --access public"
   },
   "files": [
     "*.js",
