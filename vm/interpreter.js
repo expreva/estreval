@@ -80,6 +80,8 @@ function internalEval(reflection, code, useGlobalScope = true) {
       // share timeout
       this.execStartTime = instance.getExecStartTime()
       this.execEndTime = this.execStartTime
+      // share steps
+      this.step = instance.step
     },
   }
   const currentScope = useGlobalScope ? instance.getGlobalScope() : instance.getCurrentScope()
@@ -253,6 +255,9 @@ class Interpreter {
     this.isVarDeclMode = false
     this.lastExecNode = null
     this.isRunning = false
+    this.maxSteps = typeof options.maxSteps!=='undefined'
+      ? options.maxStep
+      : 9999 // Default max steps
 
     this.options = {
       ecmaVersion: options.ecmaVersion || Interpreter.ecmaVersion,
@@ -262,7 +267,8 @@ class Interpreter {
         ? Interpreter.globalContextInFunction
         : options.globalContextInFunction,
       _initEnv: options._initEnv,
-      parse: this.parse
+      parse: this.parse,
+      maxSteps: this.maxSteps
     }
     this.context = context || Object.create(null)
     this.callStack = []
@@ -293,6 +299,8 @@ class Interpreter {
     this.collectDeclFuncs = Object.create(null)
     this.execStartTime = Date.now()
     this.execEndTime = this.execStartTime
+    this.step = 0
+
     const _initEnv = this.options._initEnv
     if (_initEnv) {
       _initEnv.call(this)
@@ -389,6 +397,7 @@ class Interpreter {
     //reset timeout
     this.execStartTime = Date.now()
     this.execEndTime = this.execStartTime
+    this.step = 0
     // reset
     this.collectDeclVars = Object.create(null)
     this.collectDeclFuncs = Object.create(null)
@@ -449,6 +458,12 @@ class Interpreter {
       return true
     }
     return false
+  }
+
+  checkMaxSteps() {
+    if (!this.isRunning) return false
+    this.step++
+    return this.step > this.options.maxSteps
   }
 
   getNodePosition(node) {
@@ -624,6 +639,9 @@ class Interpreter {
       const timeout = this.options.timeout
       if (timeout && timeout > 0 && this.checkTimeout()) {
         throw this.createInternalThrowError(Messages.ExecutionTimeOutError, timeout, null)
+      }
+      if (this.checkMaxSteps()) {
+        throw this.createInternalThrowError(Messages.MaxStepsError, this.maxSteps, null)
       }
       this.lastExecNode = node
       return closure(...args)
