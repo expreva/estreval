@@ -1,6 +1,6 @@
 {
   "name": "estreval",
-  "version": "1.4.0",
+  "version": "2.0.0",
   "description": "Evaluate JavaScript abstract syntax tree in ESTree format",
   "main": "index.js",
   "scripts": {
