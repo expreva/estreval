@@ -257,11 +257,12 @@ class Interpreter {
     this.isRunning = false
     this.maxSteps = typeof options.maxSteps!=='undefined'
       ? options.maxStep
-      : 9999 // Default max steps
+      : 1024 // Default max steps
+    this.timeout = options.timeout!=null ? options.timeout : 100 // Default time out
 
     this.options = {
       ecmaVersion: options.ecmaVersion || Interpreter.ecmaVersion,
-      timeout: options.timeout!=null ? options.timeout : 1000,
+      timeout: this.timeout,
       rootContext: options.rootContext,
       globalContextInFunction: options.globalContextInFunction === undefined
         ? Interpreter.globalContextInFunction
@@ -316,7 +317,7 @@ class Interpreter {
   }
 
   setExecTimeout(timeout = 0) {
-    this.options.timeout = timeout
+    this.this.timeout = timeout
   }
 
   getOptions() {
@@ -452,7 +453,7 @@ class Interpreter {
   checkTimeout() {
     if (!this.isRunning)
       return false
-    const timeout = this.options.timeout || 0
+    const timeout = this.timeout || 0
     const now = Date.now()
     if (now - this.execStartTime > timeout) {
       return true
@@ -636,7 +637,7 @@ class Interpreter {
       throw this.createInternalThrowError(Messages.NodeTypeSyntaxError, node.type, node)
     }
     return (...args) => {
-      const timeout = this.options.timeout
+      const timeout = this.timeout
       if (timeout && timeout > 0 && this.checkTimeout()) {
         throw this.createInternalThrowError(Messages.ExecutionTimeOutError, timeout, null)
       }
