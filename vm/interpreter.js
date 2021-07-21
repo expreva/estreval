@@ -586,6 +586,10 @@ class Interpreter {
     case 'GroupStatement':
       closure = this.groupStatementHandler(node)
       break
+    case 'SpreadElement':
+      closure = this.spreadElementHandler(node)
+      break
+
     // case 'JSXElement':
     //   closure = this.JSXElementHandler(node)
     //   break
@@ -785,68 +789,149 @@ class Interpreter {
 
   // var o = {a: 1, b: 's', get name(){}, set name(){}  ...}
   objectExpressionHandler(node) {
-    const items = []
+    const items = [] // { key, property, spread }[]
+
     function getKey(keyNode) {
       if (keyNode.type === 'Identifier') {
         // var o = {a:1}
         return keyNode.name
-      }
-      else if (keyNode.type === 'Literal') {
+      } else if (keyNode.type === 'Literal') {
         // var o = {'a':1}
         return keyNode.value
-      }
-      else {
+      } else {
         return this.throwError(Messages.ObjectStructureSyntaxError, keyNode.type, keyNode)
       }
     }
     // collect value, getter, and/or setter.
-    const properties = Object.create(null)
+    const properties = Object.create(null) // { [prop: string]: { init, get, set } }
+    const computedProperties = [] // { keyClosure, kind: 'init' | 'get' | 'set', valueClosure }[]
+
     node.properties.forEach(property => {
-      const kind = property.kind
-      const key = getKey(property.key)
-      if (!properties[key] || kind === 'init') {
-        properties[key] = {}
+      if (property.type == 'Property') {
+        const kind = property.kind
+        if (!property.computed) {
+          const key = getKey(property.key)
+
+          if (!properties[key] || kind === 'init') {
+            properties[key] = {}
+          }
+
+          properties[key][kind] = this.createClosure(property.value)
+
+          items.push({
+            key,
+            property,
+          })
+        } else {
+          const keyClosure = this.createClosure(property.key)
+          computedProperties.push({
+            keyClosure,
+            kind,
+            valueClosure: this.createClosure(property.value)
+          })
+
+        }
+      } else if (property.type == 'SpreadElement') {
+        // ts声明没有这个type，也是醉了
+        items.push({
+          // @ts-ignore
+          spread: this.createClosure(property.argument)
+        })
       }
-      properties[key][kind] = this.createClosure(property.value)
-      items.push({
-        key,
-        property,
-      })
     })
+
     return () => {
       const result = {}
       const len = items.length
+      const MArray = this.globalScope.data['Array']
+      // 非computed属性。保证顺序
       for (let i = 0; i < len; i++) {
         const item = items[i]
-        const key = item.key
-        const kinds = properties[key]
-        const value = kinds.init ? kinds.init() : undefined
-        const getter = kinds.get ? kinds.get() : function () { }
-        const setter = kinds.set ? kinds.set() : function (a) { }
-        if ('set' in kinds || 'get' in kinds) {
-          const descriptor = {
-            configurable: true,
-            enumerable: true,
-            get: getter,
-            set: setter,
-          }
-          Object.defineProperty(result, key, descriptor)
-        }
-        else {
-          const property = item.property
-          const kind = property.kind
-          // set function.name
-          // var d = { test(){} }
-          // var d = { test: function(){} }
-          if (property.key.type === 'Identifier' &&
+        if (item.key != null) {
+          // named property
+          const key = item.key
+          const kinds = properties[key]
+          const value = kinds.init ? kinds.init() : undefined
+          const getter = kinds.get ? kinds.get() : function () { }
+          const setter = kinds.set ? kinds.set() : function (a) { }
+
+          if ('set' in kinds || 'get' in kinds) {
+            const descriptor = {
+              configurable: true,
+              enumerable: true,
+              get: getter,
+              set: setter,
+            }
+            Object.defineProperty(result, key, descriptor)
+          } else {
+            const property = item.property
+            const kind = property.kind
+            // set function.name
+            // var d = { test(){} }
+            // var d = { test: function(){} }
+            if (
+              property.key.type === 'Identifier' &&
                         property.value.type === 'FunctionExpression' &&
                         kind === 'init' &&
-                        !property.value.id) {
-            defineFunctionName(value, property.key.name)
+                        !property.value.id
+            ) {
+              defineFunctionName(value, property.key.name)
+            }
+            result[key] = value
           }
-          result[key] = value
+        } else {
+          // spread object
+          let targetObj = item.spread && item.spread()
+          if (targetObj && Array.isArray(targetObj)) {
+            for(let i=0;i<targetObj.length;i++){
+              result[String(i)] = targetObj[i]
+            }
+          } else if(targetObj && typeof targetObj === 'object') {
+            // 解构只解构本身的属性，且不会copy不能枚举的和setter，copy的getter也会转换为一个简单的property
+            let keys = Object.getOwnPropertyNames(targetObj)
+            keys.forEach(key=>{
+              result[key] = targetObj[key]
+            })
+          } else {
+            // 试了一下，在spread element非法的情况下，会忽略而不报错
+            continue
+          }
         }
       }
+
+      let prop = {}
+      computedProperties.forEach(pr=>{
+        let key = pr.keyClosure()
+        let isSb = isSymbol(key)
+        let name = isSb?storeKey(key):key
+        if(!prop[name]){prop[name] = {}}
+        prop[name][pr.kind] = pr.valueClosure()
+        prop[name]['symbol'] = isSb
+      })
+      Object.getOwnPropertyNames(prop).forEach(name=>{
+        let item = prop[name]
+        if ('set' in item || 'get' in item) {
+          const descriptor = {
+            configurable: true,
+            enumerable: item.symbol?false:true,
+            get: item.get || function () { },
+            set: item.set || function (a) { },
+          }
+          Object.defineProperty(result, name, descriptor)
+        } else {
+          if(item.symbol){
+            Object.defineProperty(result, name, {
+              value: item.init,
+              writable: true,
+              enumerable: false,
+              configurable: true,
+            })
+          } else {
+            result[name] = item.init
+          }
+        }
+      })
+
       return result
     }
   }
@@ -854,16 +939,35 @@ class Interpreter {
   // [1,2,3]
   arrayExpressionHandler(node) {
     //fix: [,,,1,2]
-    const items = node.elements.map(element => element ? this.createClosure(element) : element)
+    const items = node.elements.map(element =>{
+      if (!element) return null
+      return {
+        type: element.type,
+        closure: element.type == 'SpreadElement'
+          ? this.createClosure(element.argument)
+          : this.createClosure(element)
+      }
+    })
     return () => {
       const len = items.length
-      const result = Array(len)
+      let result = [] // new this.globalScope.data['Array']
       for (let i = 0; i < len; i++) {
         const item = items[i]
-        if (item) {
-          result[i] = item()
+        if (!item) {
+          result.push(undefined)
+        } else {
+          if(item.type == 'SpreadElement'){
+            let arr = item.closure()
+            if(!Array.isArray(arr)){
+              throw this.createInternalThrowError(Messages.NormalError, 'cannot spread, not an array type', node)
+            }
+            result = result.concat(arr)
+          } else {
+            result.push(item.closure())
+          }
         }
       }
+
       return result
     }
   }
@@ -983,9 +1087,21 @@ class Interpreter {
   // func()
   callExpressionHandler(node) {
     const funcGetter = this.createCallFunctionGetter(node.callee)
-    const argsGetter = node.arguments.map(arg => this.createClosure(arg))
+    const argsGetter = node.arguments.map(arg => ({
+      type: arg.type,
+      closure: this.createClosure(arg)
+    }))
     return () => {
-      return funcGetter()(...argsGetter.map(arg => arg()))
+      let args = []
+      for(let i=0;i<argsGetter.length;i++){
+        let arg = argsGetter[i]
+        if(arg.type === 'SpreadElement'){
+          args = args.concat(arg.closure())
+        }else{
+          args.push(arg.closure())
+        }
+      }
+      return funcGetter()(...args)
     }
   }
 
@@ -995,26 +1111,59 @@ class Interpreter {
     const source = this.source
     const oldDeclVars = this.collectDeclVars
     const oldDeclFuncs = this.collectDeclFuncs
+    const oldDeclLex = this.collectDeclLex
+
+    // Prepare the declaration hoist variable of the new scope
     this.collectDeclVars = Object.create(null)
     this.collectDeclFuncs = Object.create(null)
-    const name = node.id ? node.id.name : '' /**anonymous*/
-    const paramLength = node.params.length
-    const paramsGetter = node.params.map(param => this.createParamNameGetter(param))
+    this.collectDeclLex = []
+    const name = node.id ? node.id.name : "" /**anonymous*/
+
+    // Variable parameters are not counted in function.length
+    const paramLength = node.params.filter(_=>_.type!='RestElement').length
+
+    const paramsGetter = node.params.map(param => ({
+      type: param.type,
+      closure: this.createParamNameGetter(param)
+    }))
+    this.blockDeclareStart()
     // set scope
     const bodyClosure = this.createClosure(node.body)
+    let lexDecls = this.blockDeclareEnd()
+
+    // 这里是准备好的变量和函数声明提升
     const declVars = this.collectDeclVars
     const declFuncs = this.collectDeclFuncs
+    const declLex = this.collectDeclLex
+
     this.collectDeclVars = oldDeclVars
     this.collectDeclFuncs = oldDeclFuncs
-    return () => {
+    this.collectDeclLex = oldDeclLex
+
+    // Create a new scope and return a function, which will be executed in the newly created scope
+    return (scope) => {
       // bind current scope
-      const runtimeScope = self.getCurrentScope()
+
+      // Note that the scope of a function execution is not the scope of the actual call,
+      // but the scope of the code location when it is declared. The scope of the function
+      // name declaration is equivalent to the scope of the var functionName declaration
+      const runtimeScope = scope || self.getCurrentScope()
+
       const func = function (...args) {
         self.callStack.push(`${name}`)
+
         const prevScope = self.getCurrentScope()
+        const prev_functionVarScope = self._functionVarScope
+        //
         const currentScope = createScope(runtimeScope, `FunctionScope(${name})`)
+        currentScope.lexDeclared = lexDecls
+
         self.setCurrentScope(currentScope)
+        // console.info('the current scope is ', currentScope)
+
+        // When the function is executed, a new scope is created, and the next line points the running pointer of the program to the new scope
         self.addDeclarationsToScope(declVars, declFuncs, currentScope)
+        self._functionVarScope = currentScope
         // var t = function(){ typeof t } // function
         // t = function(){ typeof t } // function
         // z = function tx(){ typeof tx } // function
@@ -1024,31 +1173,45 @@ class Interpreter {
           currentScope.data[name] = func
         }
         // init arguments var
-        currentScope.data['arguments'] = arguments
+        currentScope.data["arguments"] = arguments
+
         paramsGetter.forEach((getter, i) => {
-          currentScope.data[getter()] = args[i]
+          if(getter.type === 'RestElement'){
+            currentScope.data[getter.closure()] = args.slice(i)
+          }else{
+            currentScope.data[getter.closure()] = args[i]
+          }
         })
+
         // init this
         const prevContext = self.getCurrentContext()
         //for ThisExpression
         self.setCurrentContext(this)
+
+        // Run
         const result = bodyClosure()
-        //reset
+
+        // Restore
         self.setCurrentContext(prevContext)
         self.setCurrentScope(prevScope)
+        self._functionVarScope = prev_functionVarScope
         self.callStack.pop()
+
         if (result instanceof Return) {
           return result.value
         }
       }
+
       defineFunctionName(func, name)
-      Object.defineProperty(func, 'length', {
+
+      Object.defineProperty(func, "length", {
         value: paramLength,
         writable: false,
         enumerable: false,
         configurable: true,
       })
-      Object.defineProperty(func, 'toString', {
+
+      Object.defineProperty(func, "toString", {
         value: () => {
           return source.slice(node.start, node.end)
         },
@@ -1056,7 +1219,7 @@ class Interpreter {
         configurable: true,
         enumerable: false,
       })
-      Object.defineProperty(func, 'valueOf', {
+      Object.defineProperty(func, "valueOf", {
         value: () => {
           return source.slice(node.start, node.end)
         },
@@ -1064,6 +1227,7 @@ class Interpreter {
         configurable: true,
         enumerable: false,
       })
+
       return func
     }
   }
@@ -1732,7 +1896,7 @@ class Interpreter {
         }
       }
     }
-    if (node.type === "ForStatement") {
+    if (node.type === 'ForStatement') {
       if (node.init) {
         this.blockDeclareStart()
         initClosure = this.createClosure(node.init)
@@ -1746,15 +1910,15 @@ class Interpreter {
     return pNode => {
       let labelName
       let result = EmptyStatementReturn
-      let shouldInitExec = node.type === "DoWhileStatement"
+      let shouldInitExec = node.type === 'DoWhileStatement'
 
-      if (pNode && pNode.type === "LabeledStatement") {
+      if (pNode && pNode.type === 'LabeledStatement') {
         labelName = pNode.label.name
       }
       let prevScope
       let newScope
       if (initLexDeclared) {
-        newScope = createScope(this.getCurrentScope(), `BScope(for-let)`, "block")
+        newScope = createScope(this.getCurrentScope(), `BScope(for-let)`, 'block')
         newScope.lexDeclared = initLexDeclared
         prevScope = this.entryBlockScope(newScope)
       }
@@ -1765,7 +1929,7 @@ class Interpreter {
         let bodyPrev
         let bodyScope
         if (bodyClosure.needBlock) {
-          bodyScope = createScope(this.getCurrentScope(), `BScope(for-body)`, "block")
+          bodyScope = createScope(this.getCurrentScope(), `BScope(for-body)`, 'block')
           bodyScope.lexDeclared = bodyClosure.needBlock
           bodyPrev = this.entryBlockScope(bodyScope)
         }
@@ -2174,15 +2338,29 @@ class Interpreter {
     }
   }
 
+  // (...args)
+  spreadElementHandler(node) {
+    let closure = this.createClosure(node.argument)
+    return () => {
+      const data = closure()
+      const MArray = this.globalScope.data['Array']
+      if(!Array.isArray(data)){
+        throw this.createInternalThrowError(Messages.NormalError, `spread node type not array`, node)
+      }
+      return data
+    }
+  }
+
 
   // ===================== Utilities =====================
 
   // get es3/5 param name
   createParamNameGetter(node) {
-    if (node.type === 'Identifier') {
+    if (node.type === "Identifier") {
       return () => node.name
-    }
-    else {
+    } else if (node.type === 'RestElement') {
+      return this.createParamNameGetter(node.argument)
+    } else {
       throw this.createInternalThrowError(Messages.ParamTypeSyntaxError, node.type, node)
     }
   }

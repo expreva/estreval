@@ -233,3 +233,11 @@ test('switch statement', function(t){
 //   t.equal(run('o = { k: 1 }; o |> x => { x.k++ }; o.k`'), 2)
 //   t.end()
 // })
+
+
+test('spread expression', function(t){
+  t.deepEqual(run('x = [1, 2]; y = [3, 4]; z = [...x, ...y]'), [1, 2, 3, 4])
+  t.deepEqual(run('x = { a: 1, b: 2 }; y = { c: 3, d: 4 }; z = { ...x, ...y }'), { a: 1, b: 2, c: 3, d: 4 })
+  t.deepEqual(run('((x, ...args) => [x, ...args])(1,2,3,4)'), [1, 2, 3, 4])
+  t.end()
+})
