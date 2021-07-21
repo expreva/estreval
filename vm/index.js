@@ -71,12 +71,7 @@ module.exports = {
   runInContext,
   runInNewContext,
   createFunction,
-  parse(str, parserOptions = {}) {
-    return defaultParse(str, {
-      ecmaVersion: 'latest', // Required option
-      ...parserOptions
-    })
-  },
+  parse: defaultParse,
   evaluate,
   Script
 }

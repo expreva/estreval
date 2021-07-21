@@ -7,6 +7,7 @@ const parser = Parser.extend(
 
 // See https://github.com/acornjs/acorn/tree/master/acorn#interface
 const parserOptions = {
+  ecmaVersion: 'latest',
   ranges: true,
   locations: true,
   allowReturnOutsideFunction: true,

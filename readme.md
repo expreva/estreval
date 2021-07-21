@@ -3,22 +3,39 @@
 Evaluate JavaScript abstract syntax tree in [ESTree](https://github.com/estree/estree) format
 
 
-## Parse and evaluate
+## Evaluate
 
-Parse and evaluate - the default parser is [Acorn](https://github.com/acornjs/acorn).
+The main function evaluates an expression.
 
 ```js
 const estreval = require('estreval')
 
-const context = {
-  x: 3
-}
+estreval('1 + 2 * 3') // 7
+```
+
+Optionally pass the global context of variables to which the code will have access.
+
+```js
+const estreval = require('estreval')
+
+const context = { x: 3 }
 
 estreval('y => x * y', context)(5) // 15
 ```
 
+## Default parser
 
-## Custom parser
+The default parser uses [Acorn](https://github.com/acornjs/acorn).
+
+It can be imported by itself.
+
+```js
+const parse = require('estreval/parse')
+
+const tree = parse('y => x * y') // ESTree format
+```
+
+## Evaluate with custom parser
 
 To use a custom parser, import the evaluate function separately.
 
@@ -26,19 +43,20 @@ The following example uses [Esprima](https://github.com/jquery/esprima).
 
 ```js
 const evaluate = require('estreval/evaluate')
-const { parseScript } = require('esprima')
+const { parseScript: parse } = require('esprima')
 
-const tree = parseScript('y => x * y')
+const tree = parse('y => x * y')
+const context = { x: 3 }
+const options = { parse }
 
-evaluate(tree, { x: 3 })(5) // 15
+evaluate(tree, context, options)(5) // 15
 ```
 
-The parse function can be passed as the `parse` property in the optional third argument `options`.  It will be used when new instances of `Function` are created inside the runtime. Otherwise, `Function` will be undefined.
+The parse function can be passed as the `parse` property in the optional third argument `options`.  It will be used when new instances of `Function` are created inside the runtime. Otherwise, the use of `Function` will throw an error.
 
-```
-evaluate(tree, context, { parse })
-```
+## Options
 
+The evaluate
 
 ## Develop
 
@@ -77,8 +95,12 @@ Enter `.reload` in the REPL to reload the library after editing its files.
 
 Beyond ES5
 
+- [x] Array function expression
+- [x] Block scope and let and const
+- [x] Spread and rest operators
 - [x] Class
-- ? Async / await
+- [x] Promise
+- ? Async / await - Maybe not.. This would require event loop.
 
 ## References
 
