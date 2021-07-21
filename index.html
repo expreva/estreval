@@ -1,0 +1,67 @@
+
+<h1>Test page</h1>
+
+<script src="/build/estreval.min.js"></script>
+
+<h2>Code</h2>
+<textarea id="code" cols="30" rows="10"></textarea>
+
+<h2>Result</h2>
+<pre><code id="result"></code></pre>
+
+<h2>Parsed</h2>
+<pre><code id="parsed"></code></pre>
+
+
+<script>
+
+console.log('estreval', estreval)
+
+const $code = document.getElementById('code')
+const $result = document.getElementById('result')
+const $parsed = document.getElementById('parsed')
+
+function evaluateCode() {
+
+  const code = $code.value
+
+  try {
+
+    const parsed = estreval.parse(code)
+
+    $parsed.innerText = JSON.stringify(parsed, null, 2)
+
+    const result = estreval(parsed)
+
+    $result.innerText = typeof result === 'object'
+      ? JSON.stringify(result, null, 2)
+      : typeof result === 'function'
+        ? 'function'+(result.name ? ' '+result.name : '')
+        : result
+
+  } catch (e) {
+
+    let message = `${ e.name && e.name!=='Error' ? e.name+': ' : '' }${e.message}`
+
+    if (
+      message[ message.length - 1 ]!==')' // Make sure it doesn't have location already
+      && e.trace && e.trace[0] && e.trace[0].loc && e.trace[0].loc.start
+    ) {
+      const { line, column } = e.trace[0].loc.start
+      message += ` (${line}:${column})`
+    }
+
+    $result.innerText = message
+
+    console.log(message)
+    if (e.trace) console.log('trace', e.trace)
+  }
+}
+
+$code.addEventListener('input', function(e) {
+  evaluateCode()
+})
+
+evaluateCode()
+
+</script>

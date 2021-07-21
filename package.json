@@ -1,0 +1,43 @@
+{
+  "name": "estreval",
+  "version": "1.4.0",
+  "description": "Evaluate JavaScript abstract syntax tree in ESTree format",
+  "main": "index.js",
+  "scripts": {
+    "build": "esbuild index.js --bundle --minify --sourcemap --format=iife --global-name=estreval --outfile=build/estreval.min.js",
+    "dev": "concurrently --raw 'esbuild index.js --bundle --sourcemap --format=iife --global-name=estreval --outfile=build/estreval.min.js --watch' 'serve --no-clipboard'",
+    "test": "tape test/*.js"
+  },
+  "files": [
+    "*.js",
+    "build/*",
+    "package.json",
+    "readme.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/expreva/estreval"
+  },
+  "keywords": [
+    "acorn",
+    "esprima",
+    "estree",
+    "evaluate",
+    "eval"
+  ],
+  "author": "Eliot Akira",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/expreva/estreval/issues"
+  },
+  "dependencies": {
+    "acorn": "^8.4.0",
+    "acorn-jsx": "^5.3.1"
+  },
+  "devDependencies": {
+    "concurrently": "^6.2.0",
+    "esbuild": "^0.12.5",
+    "serve": "^12.0.0",
+    "tape": "4"
+  }
+}
