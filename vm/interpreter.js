@@ -290,7 +290,7 @@ class Interpreter {
     this.parse = options.parse || this.parse
     if (!this.parse) throw new Error('Option "parse" is required')
 
-    this.sourceList = []
+    // this.sourceList = []
     this.collectDeclVars = Object.create(null)
     this.collectDeclFuncs = Object.create(null)
     this.collectDeclLex = []
@@ -311,7 +311,8 @@ class Interpreter {
         : options.globalContextInFunction,
       _initEnv: options._initEnv,
       parse: this.parse,
-      maxSteps: this.maxSteps
+      maxSteps: this.maxSteps,
+      source: options.source
     }
     this.context = context || Object.create(null)
     this.callStack = []
@@ -434,8 +435,12 @@ class Interpreter {
 
   evaluateNode(node, source = '') {
     this.value = undefined
-    this.source = source
-    this.sourceList.push(source)
+
+    this.source = typeof source==='string'
+      ? source
+      : this.options.source || ''
+    // this.sourceList.push(source) // Don't store source lines
+
     this.isRunning = true
     //reset timeout
     this.execStartTime = Date.now()
@@ -1439,6 +1444,7 @@ class Interpreter {
         configurable: true,
         enumerable: false,
       })
+
       Object.defineProperty(func, 'valueOf', {
         value: () => {
           return source.slice(node.start, node.end)
