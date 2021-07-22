@@ -1,4 +1,4 @@
-const { Interpreter } = require('./vm/interpreter')
+const { Interpreter } = require('./interpreter')
 
 let interpreter
 

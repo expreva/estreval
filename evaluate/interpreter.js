@@ -1,6 +1,9 @@
-const { Messages, InterruptThrowError, InterruptThrowReferenceError, InterruptThrowSyntaxError, } = require('./messages')
-
-const version = '%VERSION%'
+const {
+  Messages,
+  InterruptThrowError,
+  InterruptThrowReferenceError,
+  InterruptThrowSyntaxError
+} = require('./messages')
 
 function defineFunctionName(func, name) {
   Object.defineProperty(func, 'name', {
@@ -442,11 +445,13 @@ class Interpreter {
     // this.sourceList.push(source) // Don't store source lines
 
     this.isRunning = true
-    //reset timeout
+
+    // Reset timeout
     this.execStartTime = Date.now()
     this.execEndTime = this.execStartTime
     this.step = 0
-    // reset
+
+    // Reset scope
     this.collectDeclVars = Object.create(null)
     this.collectDeclFuncs = Object.create(null)
     const currentScope = this.getCurrentScope()
@@ -454,26 +459,35 @@ class Interpreter {
     const labelStack = currentScope.labelStack.concat([])
     const callStack = this.callStack.concat([])
     const reset = () => {
-      this.setCurrentScope(currentScope) //reset scope
-      this.setCurrentContext(currentContext) //reset context
-      currentScope.labelStack = labelStack //reset label stack
-      this.callStack = callStack //reset call stack
+      this.setCurrentScope(currentScope) // Scope
+      this.setCurrentContext(currentContext) // Context
+      currentScope.labelStack = labelStack // Label stack
+      this.callStack = callStack // Call stack
     }
-    // start run
+
+    // Start run
     try {
+
       const bodyClosure = this.createClosure(node)
-      // add declares to data
-      this.addDeclarationsToScope(this.collectDeclVars, this.collectDeclFuncs, this.getCurrentScope())
+
+      // Add declares to data
+      this.addDeclarationsToScope(
+        this.collectDeclVars,
+        this.collectDeclFuncs,
+        this.getCurrentScope()
+      )
+
       bodyClosure()
-    }
-    catch (e) { // eslint-disable-line no-useless-catch
+
+    } catch (e) { // eslint-disable-line no-useless-catch
       throw e
-    }
-    finally {
+    } finally {
       reset()
       this.execEndTime = Date.now()
     }
+
     this.isRunning = false
+
     return this.getValue()
   }
 
@@ -523,7 +537,9 @@ class Interpreter {
   }
 
   createClosure(node) {
+
     let closure
+
     switch (node.type) {
     case 'ClassDeclaration':
       closure = this.classDeclarationHandler(node)
@@ -672,7 +688,7 @@ class Interpreter {
     //   closure = this.JSXMemberExpressionHandler(node)
     //   break
     // case 'JSXOpeningElement':
-    //   // 在jsxelement就处理了，不可能到这里
+    //   // It's processed in jsxelement, it's impossible to get here
     //   break
     // case 'JSXText':
     //   closure = this.JSXTextHandler(node)
@@ -680,9 +696,11 @@ class Interpreter {
     // case 'JSXEmptyExpression':
     //   closure = () => null
     //   break
+
     default:
       throw this.createInternalThrowError(Messages.NodeTypeSyntaxError, node.type, node)
     }
+
     return (...args) => {
       const timeout = this.timeout
       if (timeout && timeout > 0 && this.checkTimeout()) {
@@ -2815,10 +2833,10 @@ class Interpreter {
   }
 }
 
-Interpreter.version = version
 Interpreter.eval = internalEval
 Interpreter.Function = internalFunction
 Interpreter.ecmaVersion = 'latest' // 5
+// Interpreter.version = '%VERSION%'
 Interpreter.globalContextInFunction = void 0
 Interpreter.global = Object.create(null)
 

@@ -1,19 +1,8 @@
-const vm = require('./vm')
-const { Interpreter } = require('./vm/interpreter')
-const {
-  parse,
-  evaluate,
-  createFunction
-} = vm
+const createVirtualMachine = require('./vm')
+const parse = require('./parse/jsx')
 
-const estreval = evaluate
-
-Object.assign(estreval, {
-  Interpreter,
-  vm,
-  parse,
-  evaluate,
-  createFunction
+const estreval = createVirtualMachine({
+  parse
 })
 
 module.exports = estreval
