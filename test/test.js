@@ -74,7 +74,9 @@ test('arrow function declaration', function(t){
 test('this', function(t){
   // t.equal(run('this', {this: 'test'}), 'test') // gets {this: 'test'}
   t.deepEqual(run('this'), {}) // undefined
+
   console.log('\n---> TODO: this===undefined or passed in\n')
+
   t.equal(run('o = {f: function(){return this}, v: "test"}; o.f()').v, 'test')
   t.equal(run('f = function(){return this.toString()}; f.apply("test")'), 'test')
   t.end()
