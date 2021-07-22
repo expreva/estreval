@@ -1,8 +1,13 @@
+const path = require('path')
+const util = require('util')
+const os = require('os')
+const fs = require('fs')
 
 // https://nodejs.org/api/repl.html
 const repl = require('repl')
 
-const util = require('util')
+
+const homedir = os.homedir()
 
 let estreval = require('../index')
 
@@ -60,6 +65,34 @@ const replServer = repl.start({
 
 const context = {
   parse: src => console.log(inspect( estreval.parse(src) )),
+  require: (src = '') => {
+
+    const srcPath = src[0]==='.'
+      ? path.resolve(src)
+      : src[0]==='~'
+        ? src.replace(/^~/, homedir)
+        : src
+
+    if (srcPath[0]!=='/') {
+      return require(srcPath)
+    }
+
+    if ( ! fs.existsSync(srcPath) ) {
+      throw new Error(`File not found ${src}`)
+    }
+
+    const code = fs.readFileSync(srcPath, 'utf8')
+
+    replServer.context.module.exports = {}
+
+    let result = estreval(code, replServer.context)
+
+    return replServer.context.module.exports
+
+    // replEval(code, replServer.context, srcPath, (error, result) => {
+    //   error ? console.error('Error', error) : console.log(result)
+    // })
+  },
   print: (...args) => console.log( ...args.map(inspect) )
 }
 
@@ -82,7 +115,7 @@ replServer.defineCommand('reload', {
      */
     Object.keys(require.cache).forEach(key => delete require.cache[key])
 
-    estreval = require('./index')
+    estreval = require('../index')
 
     this.displayPrompt()
   }
