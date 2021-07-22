@@ -749,7 +749,7 @@ class Interpreter {
       case 'instanceof':
         return leftValue instanceof rightValue
       case '|>':
-        if (typeof r!=='function') {
+        if (typeof rightValue!=='function') {
           throw new TypeError('Right side of pipeline must be a function')
         }
         return rightValue(leftValue)
