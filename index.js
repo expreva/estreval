@@ -6,7 +6,9 @@ const {
   createFunction
 } = vm
 
-Object.assign(evaluate, {
+const estreval = evaluate
+
+Object.assign(estreval, {
   Interpreter,
   vm,
   parse,
@@ -14,4 +16,4 @@ Object.assign(evaluate, {
   createFunction
 })
 
-module.exports = evaluate
+module.exports = estreval
