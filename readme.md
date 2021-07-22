@@ -35,8 +35,8 @@ estreval(code, context, options)
 
 It can have the following properties.
 
-- `timeout` - Maximum amount of time (in milliseconds) allowed for the code - Default: 100
-- `maxSteps` - Maximum number of steps allowed for the code - Default: 1024
+- `timeout` - Maximum amount of time (in milliseconds) allowed for the code - Default: `100`
+- `maxSteps` - Maximum number of steps allowed for the code - Default: `1024`
 
 ## Default parser
 
@@ -81,18 +81,18 @@ const tree = parse(code, {
 })
 ```
 
-This is necessary because Babel uses [its own AST format](https://babeljs.io/docs/en/babel-parser.html#output) with some differences to the ESTrees specifications.
+This is necessary because Babel uses [its own AST format](https://babeljs.io/docs/en/babel-parser.html#output), with some differences from the ESTree specification.
 
 
 ## REPL
 
-Start a [read-eval-print loop](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop) to interact with the runtime.
+Start a [read-eval-print loop](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop) to interact with the runtime in the terminal.
 
 ```
 node repl
 ```
 
-The following functions are provided for convenience:
+The following functions are provided for convenience.
 
 - `print( any )` - Show value using `inspect` and `console.log`
 - `parse( string )` - Parse given string and print abstract syntax tree
