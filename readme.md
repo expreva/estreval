@@ -5,7 +5,7 @@ Evaluate JavaScript abstract syntax tree in [ESTree](https://github.com/estree/e
 
 ## Evaluate
 
-The main function evaluates an expression.
+The main function parses and evaluates an expression.
 
 ```js
 const estreval = require('estreval')
@@ -13,11 +13,13 @@ const estreval = require('estreval')
 estreval('1 + 2 * 3') // 7
 ```
 
-Optionally pass the global context of variables to which the code will have access.
+The expression can be given as string, or an object in ESTree format.
+
+## Context
+
+The second argument is a `context` object (optional). It defines the global context of variables to which the code will have access.
 
 ```js
-const estreval = require('estreval')
-
 const context = { x: 3 }
 
 estreval('y => x * y', context)(5) // 15
@@ -25,7 +27,7 @@ estreval('y => x * y', context)(5) // 15
 
 ## Options
 
-The main function's third argument is an `options` object (optional).
+The third argument is an `options` object (optional).
 
 ```js
 estreval(code, context, options)
@@ -48,9 +50,9 @@ const parse = require('estreval/parse')
 const tree = parse('y => x * y') // ESTree format
 ```
 
-## Evaluate with custom parser
+## Custom parser
 
-To use a custom parser, import the evaluate function separately.
+To use a custom parser, first import the evaluate function separately.
 
 The following example uses [Esprima](https://github.com/jquery/esprima).
 
@@ -65,21 +67,21 @@ const options = { parse }
 evaluate(tree, context, options)(5) // 15
 ```
 
-The parse function can be passed as the `parse` property in the optional third argument `options`.  It will be used when new instances of `Function` are created inside the runtime. Otherwise, the use of `Function` will throw an error.
+The parse function can be passed as the `parse` option.  It will be used when new instances of `Function` are created inside the runtime. Otherwise, the use of `Function` will throw an error.
 
-## Develop
+#### Babel parser
 
-Build unminified for development, watch files for changes, and start server for test page
+To use the [Babel parser](https://github.com/babel/babel/tree/main/packages/babel-parser), specify its built-in plugin `estree` to convert the syntax tree to ESTree format.
 
+```js
+const { parse } = require('@babel/parser')
+
+const tree = parse(code, {
+  plugins: ['estree']
+})
 ```
-npm run dev
-```
 
-Build minified for production
-
-```
-npm run build
-```
+This is necessary because Babel uses [its own AST format](https://babeljs.io/docs/en/babel-parser.html#output) with some differences to the ESTrees specifications.
 
 
 ## REPL
@@ -100,6 +102,21 @@ The following functions are provided for convenience:
 Enter `.reload` in the REPL to reload the library after editing its files.
 
 
+## Develop the library
+
+Build unminified for development, watch files for changes, and start server for test page
+
+```
+npm run dev
+```
+
+Build minified for production
+
+```
+npm run build
+```
+
+
 ## Roadmap
 
 Beyond ES5
@@ -109,7 +126,7 @@ Beyond ES5
 - [x] Spread and rest operators
 - [x] Class
 - [x] Promise
-- [ ] Async / await - Maybe not.. This would require event loop.
+- [ ] Async / await - Maybe not.. This would require an event loop.
 
 ## References
 
