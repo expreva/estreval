@@ -1,19 +1,28 @@
-var run = require('../')
-var test = require('tape')
 
-test('create class', function(t){
-  const C = run('class C { x = 3; constructor() { this.y = 5 } add() { this.z = 7 } }')
-  t.notEqual(C, undefined)
-  let instance
-  t.doesNotThrow(function() {
-    instance = new C
-  })
-  t.notEqual(instance, undefined)
-  t.equal(instance.x, 3)
-  t.equal(instance.y, 5)
-  t.doesNotThrow(function() {
+test('class', ({ it, evaluate, run }) => {
+
+  const C = evaluate('class C { x = 3; constructor() { this.y = 5 } add() { this.z = 7 } }')
+
+  it('creates a function', C instanceof Function)
+
+  const instance = new C
+
+  it('new Class creates an instance', instance)
+
+  it('instance has property', instance.x===3)
+
+  it('instance has property added in constructor', instance.y===5)
+
+  let ok
+  try {
     instance.add()
-  })
-  t.equal(instance.z, 7)
-  t.end()
+    ok = true
+  } catch(e) {
+    ok = true
+  }
+
+  it('instance method can be called', ok)
+
+  it('instance method can modify instance property', instance.z===7)
+
 })

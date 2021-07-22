@@ -1,74 +1,44 @@
-var run = require('../')
-var test = require('tape')
 
-test('null', function(t){
-  t.equal(JSON.stringify(run('null')), 'null')
-  t.end()
+test('literals', ({ run }) => {
+
+  run('null', null)
+
+  run('undefined', undefined)
+
+  run('0', 0)
+  run('1', 1)
+  run('""', '')
+  run(`''`, '')
+  run('"a"', 'a')
+  run(`'a'`, 'a')
+  run('[]', [])
+  run('[0]', [0])
+  run('[1,2,3]', [1, 2, 3])
+
+  /**
+   * An object must be wrapped in `()`, or it throws "SyntaxError:
+   * Unexpected token".
+   *
+   * This shows a fundamental issue with the object notation `{ a: 0 }`,
+   * because it cannot be distinguished from a scope, like `{ a = 0 }`.
+   */
+  // run('{}', {})
+
+  run('({})', {})
+  run('({ a: 0, b: 2, c: 3 })', { a: 0, b: 2, c: 3 })
+
+  run('', undefined) // Same as eval('')
+  run(';', undefined) // Same as eval(';')
+
 })
 
-test('undefined', function(t){
-  t.equal(typeof run('undefined'), 'undefined')
-  t.end()
-})
+test('template string', ({ run }) => {
 
-test('number zero (falsy)', function(t){
-  t.equal(run('0'), 0)
-  t.end()
-})
+  const context = {
+    foo: 'hello',
+    bar: 'world'
+  }
 
-test('number one', function(t){
-  t.equal(run('1'), 1)
-  t.end()
-})
+  run('`${foo} ${bar}!`', 'hello world!', context)
 
-test('empty string (falsy)', function(t){
-  t.equal(run('""'), "")
-  t.end()
-})
-
-test('simple string', function(t){
-  t.equal(run('"a"'), "a")
-  t.end()
-})
-
-test('empty array', function(t){
-  var result = run('[]')
-  t.deepEqual(result, [])
-  t.end()
-})
-
-test('simple array', function(t){
-  var result = run('[0]')
-  t.deepEqual(result, [0])
-  t.end()
-})
-
-test('empty object', function(t){
-  var result = run('({})')
-  t.deepEqual(result, {})
-  t.end()
-})
-
-test('simple object', function(t){
-  var result = run('({a:0})')
-  t.deepEqual(result, {a:0})
-  t.end()
-})
-
-test('empty string', function (t){
-  var result = run('')
-  t.deepEqual(result, undefined) //same as eval('')
-  t.end()
-})
-
-test('semicolon', function (t){
-  var result = run(';')
-  t.deepEqual(result, undefined) //same as eval(';')
-  t.end()
-})
-
-test('template string', function (t) {
-  var context = { foo: 'hello', bar: 'world' }
-  t.equal(run('`${foo} ${bar}!`', context), 'hello world!')
-  t.end()
 })
