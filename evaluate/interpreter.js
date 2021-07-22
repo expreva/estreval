@@ -290,8 +290,9 @@ class Interpreter {
   reset(context = Interpreter.global, options = {}) {
 
     // Default or custom parser must be passed in options
-    this.parse = options.parse || this.parse
-    if (!this.parse) throw new Error('Option "parse" is required')
+    this.parse = options.parse || this.parse || function() {
+      throw new Error('Undefined parse method')
+    }
 
     // this.sourceList = []
     this.collectDeclVars = Object.create(null)
@@ -1504,13 +1505,24 @@ class Interpreter {
       const obj = objectGetter()
       let key = keyGetter()
 
-      if (key==='prototype' || key==='__proto__') {
+      /**
+       * Prevent access to "__proto__" altogether as deprecated feature
+       * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/proto
+       */
+
+      if (key==='__proto__') {
+        throw this.createInternalThrowError(Messages.BuiltInPrototypeChangeError, obj.constructor.name, node)
+      }
+
+      // Prevent access to "prototype" of built-in object
+
+      if (key==='prototype') {
         if (this.isBuiltInObject(obj)) {
           throw this.createInternalThrowError(Messages.BuiltInPrototypeChangeError, obj.constructor.name, node)
         }
       }
 
-      // Prevent access to Function
+      // Prevent access to Function via "constructor"
       if (key==='constructor' && obj[key]===Function) {
         return (...args) => {
           return internalFunction(new InternalInterpreterReflection(this), ...args)
