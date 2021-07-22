@@ -7,6 +7,7 @@
     "build": "esbuild index.js --bundle --minify --sourcemap --format=iife --global-name=estreval --outfile=build/estreval.min.js",
     "dev": "concurrently --raw 'esbuild index.js --bundle --sourcemap --format=iife --global-name=estreval --outfile=build/estreval.min.js --watch' 'serve --no-clipboard'",
     "test": "node test/index.js",
+    "tdd": "nodemon test/index.js --watch *.js --watch jsx --watch vm --watch test",
     "release": "npm publish --access public"
   },
   "files": [
@@ -41,6 +42,7 @@
   "devDependencies": {
     "concurrently": "^6.2.0",
     "esbuild": "^0.12.5",
+    "nodemon": "^2.0.12",
     "serve": "^12.0.0",
     "testra": "1"
   }
