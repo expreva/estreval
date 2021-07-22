@@ -109,20 +109,16 @@ Beyond ES5
 - [x] Spread and rest operators
 - [x] Class
 - [x] Promise
-- ? Async / await - Maybe not.. This would require event loop.
+- [ ] Async / await - Maybe not.. This would require event loop.
 
 ## References
 
 - [eval5](https://github.com/bplok20010/eval5)
 - [estime](https://github.com/IAIAE/estime)
-
 - [notevil](https://github.com/mmckegg/notevil) and its forks
-
 - [evaljs](https://github.com/marten-de-vries/evaljs)
 - [closure-interpreter](https://github.com/int3/closure-interpreter)
-
-- https://www.npmjs.com/package/esper.js
-- https://www.npmjs.com/package/sandboxr
-- https://github.com/NeilFraser/JS-Interpreter
-- https://github.com/mozilla/narcissus/
-
+- [esper.js](https://github.com/codecombat/esper.js)
+- [sandboxr](https://github.com/jrsearles/SandBoxr)
+- [JS-Interpreter](https://github.com/NeilFraser/JS-Interpreter)
+- [narcissus](https://github.com/mozilla/narcissus/)

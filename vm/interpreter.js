@@ -800,7 +800,7 @@ class Interpreter {
         return delete obj[name]
       }
     }
-    default:
+    default: {
       let expression
       // for typeof undefined var
       // typeof adf9ad
@@ -831,7 +831,7 @@ class Interpreter {
           throw this.createInternalThrowError(Messages.UnaryOperatorSyntaxError, node.operator, node)
         }
       }
-    }
+    }}
   }
 
   // ++a --a
@@ -2003,7 +2003,7 @@ class Interpreter {
         }
         // save last value
         const ret = this.setValue(bodyClosure.closure())
-        // 恢复作用域
+        // Restore scope
         if (bodyClosure.needBlock) {
           this.setCurrentScope(bodyPrev)
         }
@@ -2335,7 +2335,7 @@ class Interpreter {
 
   debuggerStatementHandler(node) {
     return () => {
-      debugger
+      debugger // eslint-disable-line no-debugger
       return EmptyStatementReturn
     }
   }
@@ -2789,7 +2789,7 @@ class Interpreter {
     // When the function is executed, a new scope is created, and the next line
     // points the running pointer of the program to the new scope
     this.setCurrentScope(newScope)
-    // blockScope does not need to assign new promotion variables
+    // blockScope does not need to assign new hoist variables
     // self.addDeclarationsToScope(declVars, declFuncs, currentScope);
     return prevScope
   }
