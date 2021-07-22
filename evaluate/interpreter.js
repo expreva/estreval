@@ -438,6 +438,7 @@ class Interpreter {
   }
 
   evaluateNode(node, source = '') {
+
     this.value = undefined
 
     this.source = typeof source==='string'
@@ -670,47 +671,52 @@ class Interpreter {
       closure = this.spreadElementHandler(node)
       break
 
-    // case 'JSXElement':
-    //   closure = this.JSXElementHandler(node)
-    //   break
-    // case 'JSXExpressionContainer':
-    //   closure = this.JSXExpressionContainerHandler(node)
-    //   break
-    // case 'JSXIdentifier':
-    //   closure = this.JSXIdentifierHandler(node)
-    //   break
-    // case 'JSXAttribute':
-    //   closure = this.JSXAttributeHandler(node)
-    //   break
-    // case 'JSXSpreadAttribute':
-    //   closure = this.JSXSpreadAttributeHandler(node)
-    //   break
-    // case 'JSXMemberExpression':
-    //   closure = this.JSXMemberExpressionHandler(node)
-    //   break
-    // case 'JSXOpeningElement':
-    //   // It's processed in jsxelement, it's impossible to get here
-    //   break
-    // case 'JSXText':
-    //   closure = this.JSXTextHandler(node)
-    //   break
-    // case 'JSXEmptyExpression':
-    //   closure = () => null
-    //   break
+      // case 'JSXElement':
+      //   closure = this.JSXElementHandler(node)
+      //   break
+      // case 'JSXExpressionContainer':
+      //   closure = this.JSXExpressionContainerHandler(node)
+      //   break
+      // case 'JSXIdentifier':
+      //   closure = this.JSXIdentifierHandler(node)
+      //   break
+      // case 'JSXAttribute':
+      //   closure = this.JSXAttributeHandler(node)
+      //   break
+      // case 'JSXSpreadAttribute':
+      //   closure = this.JSXSpreadAttributeHandler(node)
+      //   break
+      // case 'JSXMemberExpression':
+      //   closure = this.JSXMemberExpressionHandler(node)
+      //   break
+      // case 'JSXOpeningElement':
+      //   // It's processed in jsxelement, it's impossible to get here
+      //   break
+      // case 'JSXText':
+      //   closure = this.JSXTextHandler(node)
+      //   break
+      // case 'JSXEmptyExpression':
+      //   closure = () => null
+      //   break
 
     default:
       throw this.createInternalThrowError(Messages.NodeTypeSyntaxError, node.type, node)
     }
 
     return (...args) => {
+
       const timeout = this.timeout
+
       if (timeout && timeout > 0 && this.checkTimeout()) {
         throw this.createInternalThrowError(Messages.ExecutionTimeOutError, timeout, null)
       }
+
       if (this.checkMaxSteps()) {
         throw this.createInternalThrowError(Messages.MaxStepsError, this.maxSteps, null)
       }
+
       this.lastExecNode = node
+
       return closure(...args)
     }
   }
@@ -1120,7 +1126,7 @@ class Interpreter {
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval
         // var eval = eval;
         // function test(){
-        //    eval(...); //note: use local scope in eval5，but in Browser is use global scope
+        //    eval(...); // Use local scope - in the browser it's global scope
         // }
         if (node.type === 'Identifier' && func.__IS_EVAL_FUNC && name === 'eval') {
           return (code) => {
@@ -1137,7 +1143,7 @@ class Interpreter {
         // use global scope
         // var g_eval = eval;
         // g_eval('a+1');
-        //(0,eval)(...) ...eval alias
+        // (0,eval)(...) ...eval alias
         if (func.__IS_EVAL_FUNC) {
           return (code) => {
             return func(new InternalInterpreterReflection(this), code, true)
