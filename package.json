@@ -1,6 +1,6 @@
 {
   "name": "estreval",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Evaluate JavaScript abstract syntax tree in ESTree format",
   "main": "index.js",
   "scripts": {
@@ -11,10 +11,14 @@
     "release": "npm publish --access public"
   },
   "files": [
-    "*.js",
     "build/*",
+    "evaluate/*.js",
+    "index.js",
+    "lib/*.js",
     "package.json",
-    "readme.md"
+    "parse/*.js",
+    "readme.md",
+    "repl/*.js"
   ],
   "repository": {
     "type": "git",
