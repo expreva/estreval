@@ -4,7 +4,7 @@ const repl = require('repl')
 
 const util = require('util')
 
-let safeEval = require('./index')
+let estreval = require('../index')
 
 function inspect(arg) {
   return util.inspect(arg, {
@@ -24,7 +24,7 @@ async function replEval(code, context, filename, callback) {
 
   try {
 
-    let result = await safeEval(code, context) // vm.runInNewContext(code, context)
+    let result = await estreval(code, context) // vm.runInNewContext(code, context)
 
     callback(null, result)
 
@@ -59,7 +59,7 @@ const replServer = repl.start({
 // Context
 
 const context = {
-  parse: src => console.log(inspect( safeEval.parse(src) )),
+  parse: src => console.log(inspect( estreval.parse(src) )),
   print: (...args) => console.log( ...args.map(inspect) )
 }
 
@@ -82,7 +82,7 @@ replServer.defineCommand('reload', {
      */
     Object.keys(require.cache).forEach(key => delete require.cache[key])
 
-    safeEval = require('./index')
+    estreval = require('./index')
 
     this.displayPrompt()
   }
