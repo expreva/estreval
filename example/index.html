@@ -7,16 +7,15 @@
 <style>
 
 .row {
+  display: flex;
+  flex-wrap: wrap;
   clear: both;
 }
-.row:before, .row:after {
-  display: table;
-  content: "";
-  clear: both;
+.col-code, .col-parsed {
+  margin: 0 1rem;
 }
-.col-half {
-  float: left;
-  width: 50%;
+.col-code {
+  max-width: 420px;
 }
 
 </style>
@@ -24,7 +23,7 @@
 <h1>Estreval</h1>
 
 <div class="row">
-  <div class="col-half">
+  <div class="col-code">
 
 <h2>Code</h2>
 <textarea id="code" cols="50" rows="10"></textarea>
@@ -35,7 +34,7 @@
 
 
   </div>
-  <div class="col-half">
+  <div class="col-parsed">
 
 <h2>Parsed</h2>
 
