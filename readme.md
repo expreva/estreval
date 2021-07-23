@@ -3,6 +3,26 @@
 Evaluate JavaScript abstract syntax tree in [ESTree](https://github.com/estree/estree) format
 
 
+## Overview
+
+This is a sandboxed runtime to evaluate JavaScript expressions.
+
+Here is [an example page](https://expreva.github.io/estreval/) to interact with it.
+
+
+#### Language
+
+The interpreter supports a reasonable subset of ES5, the 5th Edition of the ECMAScript language specification ([PDF](https://www.ecma-international.org/wp-content/uploads/ECMA-262_5th_edition_december_2009.pdf)). In addition, some modern syntax is supported:
+
+- Array function expression
+- Block scope, let and const
+- Class
+- JSX - No React or renderer yet
+- Spread and rest expression
+
+Notably missing are `Promise` and async/await, because there is no event loop.
+
+
 ## Evaluate
 
 The main function parses and evaluates an expression.
@@ -116,17 +136,6 @@ Build minified for production
 npm run build
 ```
 
-
-## Roadmap
-
-Beyond ES5
-
-- [x] Array function expression
-- [x] Block scope and let and const
-- [x] Spread and rest operators
-- [x] Class
-- [x] Promise
-- [ ] Async / await - Maybe not.. This would require an event loop.
 
 ## References
 
