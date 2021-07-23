@@ -1,16 +1,49 @@
 
-<h1>Test page</h1>
+<link rel="stylesheet" href="/jsonTree.css">
+<script src="/jsonTree.js"></script>
 
-<script src="/build/estreval.min.js"></script>
+<script src="/estreval.min.js"></script>
+
+<style>
+
+.row {
+  clear: both;
+}
+.row:before, .row:after {
+  display: table;
+  content: "";
+  clear: both;
+}
+.col-half {
+  float: left;
+  width: 50%;
+}
+
+</style>
+
+<h1>Estreval</h1>
+
+<div class="row">
+  <div class="col-half">
 
 <h2>Code</h2>
-<textarea id="code" cols="30" rows="10"></textarea>
+<textarea id="code" cols="50" rows="10"></textarea>
+
 
 <h2>Result</h2>
 <pre><code id="result"></code></pre>
 
+
+  </div>
+  <div class="col-half">
+
 <h2>Parsed</h2>
+
+<div id="parsedJSON"></div>
 <pre><code id="parsed"></code></pre>
+
+  </div>
+</div>
 
 
 <script>
@@ -20,6 +53,9 @@ console.log('estreval', estreval)
 const $code = document.getElementById('code')
 const $result = document.getElementById('result')
 const $parsed = document.getElementById('parsed')
+const $parsedJSON = document.getElementById('parsedJSON')
+
+let tree
 
 function evaluateCode() {
 
@@ -29,7 +65,14 @@ function evaluateCode() {
 
     const parsed = estreval.parse(code)
 
-    $parsed.innerText = JSON.stringify(parsed, null, 2)
+    // $parsed.innerText = JSON.stringify(parsed, null, 2)
+
+    if (!tree) {
+      tree = jsonTree.create(parsed, $parsedJSON)
+    } else tree.loadData(parsed)
+
+    tree.expand()
+
 
     const result = estreval(parsed)
 
@@ -63,5 +106,15 @@ $code.addEventListener('input', function(e) {
 })
 
 evaluateCode()
+
+
+
+
+
+
+
+
+
+
 
 </script>
