@@ -1,0 +1,119 @@
+
+<link rel="stylesheet" href="/jsonTree.css">
+<script src="/jsonTree.js"></script>
+
+<script src="/estreval.min.js"></script>
+
+<style>
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  clear: both;
+}
+.col-code, .col-parsed {
+  margin: 0 1rem;
+}
+.col-code {
+  max-width: 420px;
+}
+
+</style>
+
+<h1>Estreval</h1>
+
+<div class="row">
+  <div class="col-code">
+
+<h2>Code</h2>
+<textarea id="code" cols="50" rows="10"></textarea>
+
+
+<h2>Result</h2>
+<pre><code id="result"></code></pre>
+
+
+  </div>
+  <div class="col-parsed">
+
+<h2>Parsed</h2>
+
+<div id="parsedJSON"></div>
+<pre><code id="parsed"></code></pre>
+
+  </div>
+</div>
+
+
+<script>
+
+console.log('estreval', estreval)
+
+const $code = document.getElementById('code')
+const $result = document.getElementById('result')
+const $parsed = document.getElementById('parsed')
+const $parsedJSON = document.getElementById('parsedJSON')
+
+let tree
+
+function evaluateCode() {
+
+  const code = $code.value
+
+  try {
+
+    const parsed = estreval.parse(code)
+
+    // $parsed.innerText = JSON.stringify(parsed, null, 2)
+
+    if (!tree) {
+      tree = jsonTree.create(parsed, $parsedJSON)
+    } else tree.loadData(parsed)
+
+    tree.expand()
+
+
+    const result = estreval(parsed)
+
+    $result.innerText = typeof result === 'object'
+      ? JSON.stringify(result, null, 2)
+      : typeof result === 'function'
+        ? 'function'+(result.name ? ' '+result.name : '')
+        : result
+
+  } catch (e) {
+
+    let message = `${ e.name && e.name!=='Error' ? e.name+': ' : '' }${e.message}`
+
+    if (
+      message[ message.length - 1 ]!==')' // Make sure it doesn't have location already
+      && e.trace && e.trace[0] && e.trace[0].loc && e.trace[0].loc.start
+    ) {
+      const { line, column } = e.trace[0].loc.start
+      message += ` (${line}:${column})`
+    }
+
+    $result.innerText = message
+
+    console.log(message)
+    if (e.trace) console.log('trace', e.trace)
+  }
+}
+
+$code.addEventListener('input', function(e) {
+  evaluateCode()
+})
+
+evaluateCode()
+
+
+
+
+
+
+
+
+
+
+
+</script>
