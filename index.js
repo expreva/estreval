@@ -1,7 +1,7 @@
 const parse = require('./parse/jsx')
 const { Interpreter } = require('./evaluate/interpreter')
 
-let interpreter = new Interpreter(false)
+const interpreter = new Interpreter(false)
 
 function estreval(code, context = {}, options = {}) {
 
