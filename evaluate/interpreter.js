@@ -530,22 +530,44 @@ class Interpreter {
     return this.createError(this.createErrorMessage(msg, value, node), msg[2])
   }
 
-  checkTimeout() {
-    if (!this.isRunning)
-      return false
+
+  /**
+   * Check "step" - actually on every AST node: see createClosure()
+   */
+
+  checkStep() {
+
+    const timeout = this.timeout
+
+    if (timeout && timeout > 0 && this.isTimeout()) {
+      throw this.createInternalThrowError(Messages.ExecutionTimeOutError, timeout, null)
+    }
+
+    if (this.isMaxSteps()) {
+      throw this.createInternalThrowError(Messages.MaxStepsError, this.maxSteps, null)
+    }
+  }
+
+  isTimeout() {
+
+    if (!this.isRunning) return false
+
     const timeout = this.timeout || 0
     const now = Date.now()
+
     if (now - this.execStartTime > timeout) {
       return true
     }
+
     return false
   }
 
-  checkMaxSteps() {
+  isMaxSteps() {
     if (!this.isRunning) return false
     this.step++
     return this.step > this.options.maxSteps
   }
+
 
   getNodePosition(node) {
     if (node) {
@@ -688,51 +710,14 @@ class Interpreter {
       closure = this.spreadElementHandler(node)
       break
 
-      // case 'JSXElement':
-      //   closure = this.JSXElementHandler(node)
-      //   break
-      // case 'JSXExpressionContainer':
-      //   closure = this.JSXExpressionContainerHandler(node)
-      //   break
-      // case 'JSXIdentifier':
-      //   closure = this.JSXIdentifierHandler(node)
-      //   break
-      // case 'JSXAttribute':
-      //   closure = this.JSXAttributeHandler(node)
-      //   break
-      // case 'JSXSpreadAttribute':
-      //   closure = this.JSXSpreadAttributeHandler(node)
-      //   break
-      // case 'JSXMemberExpression':
-      //   closure = this.JSXMemberExpressionHandler(node)
-      //   break
-      // case 'JSXOpeningElement':
-      //   // It's processed in jsxelement, it's impossible to get here
-      //   break
-      // case 'JSXText':
-      //   closure = this.JSXTextHandler(node)
-      //   break
-      // case 'JSXEmptyExpression':
-      //   closure = () => null
-      //   break
-
     default:
       throw this.createInternalThrowError(Messages.NodeTypeSyntaxError, node.type, node)
     }
 
     return (...args) => {
 
-      const timeout = this.timeout
-
-      if (timeout && timeout > 0 && this.checkTimeout()) {
-        throw this.createInternalThrowError(Messages.ExecutionTimeOutError, timeout, null)
-      }
-
-      if (this.checkMaxSteps()) {
-        throw this.createInternalThrowError(Messages.MaxStepsError, this.maxSteps, null)
-      }
-
       this.lastExecNode = node
+      this.checkStep()
 
       return closure(...args)
     }
@@ -1225,7 +1210,7 @@ class Interpreter {
     this.collectDeclVars = Object.create(null)
     this.collectDeclFuncs = Object.create(null)
     this.collectDeclLex = []
-    const name = node.id ? node.id.name : "" /**anonymous*/
+    const name = node.id ? node.id.name : '' /**anonymous*/
 
     // Variable parameters are not counted in function.length
     const paramLength = node.params.filter(_=>_.type!='RestElement').length
@@ -1281,7 +1266,7 @@ class Interpreter {
           currentScope.data[name] = func
         }
         // init arguments var
-        currentScope.data["arguments"] = arguments
+        currentScope.data['arguments'] = arguments
 
         paramsGetter.forEach((getter, i) => {
           if(getter.type === 'RestElement'){
@@ -1312,14 +1297,14 @@ class Interpreter {
 
       defineFunctionName(func, name)
 
-      Object.defineProperty(func, "length", {
+      Object.defineProperty(func, 'length', {
         value: paramLength,
         writable: false,
         enumerable: false,
         configurable: true,
       })
 
-      Object.defineProperty(func, "toString", {
+      Object.defineProperty(func, 'toString', {
         value: () => {
           return source.slice(node.start, node.end)
         },
@@ -1328,7 +1313,7 @@ class Interpreter {
         enumerable: false,
       })
 
-      Object.defineProperty(func, "valueOf", {
+      Object.defineProperty(func, 'valueOf', {
         value: () => {
           return source.slice(node.start, node.end)
         },
@@ -1529,7 +1514,7 @@ class Interpreter {
       let key = keyGetter()
 
       /**
-       * Prevent access to "__proto__" altogether as deprecated feature
+       * Prevent access to '__proto__' altogether as deprecated feature
        * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/proto
        */
 
@@ -1537,7 +1522,7 @@ class Interpreter {
         throw this.createInternalThrowError(Messages.BuiltInPrototypeChangeError, obj.constructor.name, node)
       }
 
-      // Prevent access to "prototype" of built-in object
+      // Prevent access to 'prototype' of built-in object
 
       if (key==='prototype') {
         if (this.isBuiltInObject(obj)) {
@@ -1545,7 +1530,7 @@ class Interpreter {
         }
       }
 
-      // Prevent access to Function via "constructor"
+      // Prevent access to Function via 'constructor'
       if (key==='constructor' && obj[key]===Function) {
         return (...args) => {
           return internalFunction(new InternalInterpreterReflection(this), ...args)
@@ -1556,7 +1541,7 @@ class Interpreter {
     }
   }
 
-  //this
+  // this
   thisExpressionHandler(node) {
     return () => this.getCurrentContext()
   }
@@ -1715,20 +1700,24 @@ class Interpreter {
   }
 
   detectVaiable(node, varName, blockVariables) {
-    if (node.kind == 'var'){
+    if (node.kind == 'var') {
       /**
        * If the scope declared by var already has a lexical scope variable with the same name, the declaration of this var needs to report an error:
        * Cannot redeclare block-scoped variable 'xxx'
        */
-      if (this.collectDeclLex.some(_=>_[varName]) ){
+      if (this.collectDeclLex.some(_=>_[varName]) ) {
         throw this.createInternalThrowError(Messages.RedeclareBlockScopeVariableError, node.type, node)
       }
+
       // If it is var, declare hoist
       this.varDeclaration(varName)
+
     } else {
+
       // If it is a let/const declaration, the variable name is added to
       // the top hash of the stack in a special queue collectDeclLex
       let stackTop = this.collectDeclLex[this.collectDeclLex.length - 1]
+
       // collectDeclLex is mainly used to collect block variables during the
       // compilation phase. If a variable is dynamically declared during the
       // execution phase, then collectDeclLex will be an empty array, so judge
@@ -1736,6 +1725,7 @@ class Interpreter {
         init: false,
         kind: node.kind
       })
+
       blockVariables.push(varName)
     }
   }
@@ -1906,56 +1896,66 @@ class Interpreter {
       // if (stmt.type === 'EmptyStatement') return null;
       return this.createClosure(stmt)
     })
-    let functionDecl = node.body.map((_, index) =>
-      ({ type: _.type, index })).filter(_=>_.type == 'FunctionDeclaration'
-    )
+
+    const functionDecl = node.body
+      .map((_, index) => ({ type: _.type, index }))
+      .filter(_ => _.type == 'FunctionDeclaration')
+
     // Stores a list of block-level scoped variables
-    let lexDeclared = this.blockDeclareEnd()
+    const lexDeclared = this.blockDeclareEnd()
 
     return () => {
+
       let result = EmptyStatementReturn
       let prevScope
       let newScope
+
       if (lexDeclared){
         newScope = createScope(this.getCurrentScope(), `BScope`, 'block')
         newScope.lexDeclared = lexDeclared
         prevScope = this.entryBlockScope(newScope)
       }
-      // If there is a function declaration, execute the function declaration first:
-      functionDecl.forEach(_=>{
+
+      // Run function declarations first
+      functionDecl.forEach(_ => {
         stmtClosures[_.index]()
         stmtClosures[_.index] = null
       })
+
       stmtClosures = stmtClosures.filter(_ => _)
 
       for (let i = 0; i < stmtClosures.length; i++) {
+
         const stmtClosure = stmtClosures[i]
 
-        // save last value
+        // Save last value
         const ret = this.setValue(stmtClosure())
 
         // if (!stmtClosure) continue;
-        // EmptyStatement
+
+        // Empty statement
         if (ret === EmptyStatementReturn) continue
 
         result = ret
 
-        // BlockStatement: break label;  continue label; for(){ break ... }
-        // ReturnStatement: return xx;
+        // BlockStatement: break label; continue label; for(){ break ... }
+        // ReturnStatement: return x
         if (
-          result instanceof Return ||
-                result instanceof BreakLabel ||
-                result instanceof ContinueLabel ||
-                result === Break ||
-                result === Continue
+          result instanceof Return
+          || result instanceof BreakLabel
+          || result instanceof ContinueLabel
+          || result === Break
+          || result === Continue
         ) {
           break
         }
       }
+
       // Restore scope
-      if (lexDeclared){
+      if (lexDeclared) {
         this.setCurrentScope(prevScope)
       }
+
       // Save last value
       return result
     }
@@ -1970,7 +1970,7 @@ class Interpreter {
     return () => EmptyStatementReturn
   }
 
-  // return xx;
+  // return x
   returnStatementHandler(node) {
     const argumentClosure = node.argument ? this.createClosure(node.argument) : noop
     return () => new Return(argumentClosure())
@@ -2496,7 +2496,7 @@ class Interpreter {
 
   classExpressionHandler(node) {
 
-    const className = node.id ? node.id.name : "" /**anonymous*/
+    const className = node.id ? node.id.name : '' /**anonymous*/
 
     let classDecl = {
       // cons?: BaseClosure
@@ -2624,7 +2624,7 @@ class Interpreter {
       })
 
       if (className) {
-        Object.defineProperty(func, "name", {
+        Object.defineProperty(func, 'name', {
           value: className,
           writable: false,
           enumerable: false,
@@ -2653,7 +2653,7 @@ class Interpreter {
 
   // get es3/5 param name
   createParamNameGetter(node) {
-    if (node.type === "Identifier") {
+    if (node.type === 'Identifier') {
       return () => node.name
     } else if (node.type === 'RestElement') {
       return this.createParamNameGetter(node.argument)
