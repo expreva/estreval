@@ -76,14 +76,14 @@ function internalEval(reflection, code, useGlobalScope = true) {
   const options = {
     timeout: opts.timeout,
     _initEnv: function () {
-      // set caller context
+      // Set caller context
       if (!useGlobalScope) {
         this.setCurrentContext(instance.getCurrentContext())
       }
-      // share timeout
+      // Share timeout
       this.execStartTime = instance.getExecStartTime()
       this.execEndTime = this.execStartTime
-      // share steps
+      // Share steps
       this.step = instance.step
     },
   }
@@ -283,7 +283,7 @@ function __extend(child, father) {
 
 class Interpreter {
 
-  constructor(context = Interpreter.global, options = {}) {
+  constructor(context, options) {
     this.reset(context, options)
   }
 
@@ -294,65 +294,81 @@ class Interpreter {
       throw new Error('Undefined parse method')
     }
 
-    // this.sourceList = []
-    this.collectDeclVars = Object.create(null)
-    this.collectDeclFuncs = Object.create(null)
-    this.collectDeclLex = []
-    this.isVarDeclMode = false
-    this.lastExecNode = null
-    this.isRunning = false
+    this.timeout = options.timeout!=null
+      ? options.timeout
+      : 100 // Default time out
+
     this.maxSteps = typeof options.maxSteps!=='undefined'
       ? options.maxStep
       : 1024 // Default max steps
-    this.timeout = options.timeout!=null ? options.timeout : 100 // Default time out
 
     this.options = {
       ecmaVersion: options.ecmaVersion || Interpreter.ecmaVersion,
-      timeout: this.timeout,
       rootContext: options.rootContext,
       globalContextInFunction: options.globalContextInFunction === undefined
         ? Interpreter.globalContextInFunction
         : options.globalContextInFunction,
       _initEnv: options._initEnv,
       parse: this.parse,
+      timeout: this.timeout,
       maxSteps: this.maxSteps,
       source: options.source
     }
-    this.context = context || Object.create(null)
-    this.callStack = []
-    this.initEnvironment(this.context)
-  }
 
-  initEnvironment(ctx) {
-    let scope
-    //init global scope
-    if (ctx instanceof Scope) {
-      scope = ctx
-    }
-    else {
-      let rootScope = null
-      const superScope = this.createSuperScope(ctx)
-      if (this.options.rootContext) {
-        rootScope = new Scope(createRootContext(this.options.rootContext), superScope, RootScopeName)
-      }
-      scope = new Scope(ctx, rootScope || superScope, GlobalScopeName)
-    }
-    this.globalScope = scope
-    this.currentScope = this.globalScope
-    //init global context to this
-    this.globalContext = scope.data
-    this.currentContext = scope.data
-    // collect var/function declare
-    this.collectDeclVars = Object.create(null)
-    this.collectDeclFuncs = Object.create(null)
+    this.context = context || Object.create(null)
+
+    this.callStack = []
+    this.lastExecNode = null
+    this.isRunning = false
+
     this.execStartTime = Date.now()
     this.execEndTime = this.execStartTime
     this.step = 0
 
+    // Initialize scope
+
+    const ctx = this.context
+
+    let scope
+
+    // Init global scope
+    if (ctx instanceof Scope) {
+
+      scope = ctx
+
+    } else {
+
+      let rootScope = null
+
+      const superScope = this.createSuperScope(ctx)
+
+      if (this.options.rootContext) {
+        rootScope = new Scope(createRootContext(this.options.rootContext), superScope, RootScopeName)
+      }
+
+      scope = new Scope(ctx, rootScope || superScope, GlobalScopeName)
+    }
+
+    this.globalScope = scope
+    this.currentScope = this.globalScope
+
+    // Init global context to this
+    this.globalContext = scope.data
+    this.currentContext = scope.data
+
+    // Collect var/function declare
+    this.collectDeclVars = Object.create(null)
+    this.collectDeclFuncs = Object.create(null)
+    this.collectDeclLex = []
+    this.isVarDeclMode = false
+
+    // See internalEval()
     const _initEnv = this.options._initEnv
     if (_initEnv) {
       _initEnv.call(this)
     }
+
+    return this
   }
 
   getExecStartTime() {
