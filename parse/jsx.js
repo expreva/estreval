@@ -1,3 +1,7 @@
+/**
+ * Parser with JSX support
+ */
+
 const { Parser } = require('acorn')
 
 const acornJsx = require('acorn-jsx')
