@@ -284,6 +284,7 @@ function __extend(child, father) {
 class Interpreter {
 
   constructor(context, options) {
+    if (context===false) return // Skip initial reset
     this.reset(context, options)
   }
 
