@@ -243,25 +243,25 @@ const globalOrWindow = typeof window!=='undefined' ? window : global
 function setKeyVal(_this, item, val){
   let keyval
   let sbl = false
-  if(item.name.computed){
+  if (item.name.computed) {
     let t = (item.name.value)()
     if(isSymbol(t)){
       sbl = true
       keyval = storeKey(t)
-    }else{
+    } else {
       keyval = t
     }
-  }else{
+  } else {
     keyval = item.name.value
   }
-  if(sbl){
+  if (sbl) {
     Object.defineProperty(_this, keyval, {
       value: val,
       writable: true,
       enumerable: false,
       configurable: true,
     })
-  }else{
+  } else {
     _this[keyval] = val
   }
 }
@@ -549,7 +549,7 @@ class Interpreter {
 
   getNodePosition(node) {
     if (node) {
-      const errorCode = '' //this.source.slice(node.start, node.end);
+      const errorCode = '' // this.source.slice(node.start, node.end);
       return node.loc ? ` [${node.loc.start.line}:${node.loc.start.column}]${errorCode}` : ''
     }
     return ''
@@ -2204,16 +2204,16 @@ class Interpreter {
         this.callStack = callStack //reset call stack
       }
       /**
-             * try{...}catch(e){...}finally{...} execution sequence:
-             * try stmt
-             * try throw
-             * catch stmt (if)
-             * finally stmt
-             *
-             * finally throw or finally return
-             * catch throw or catch return
-             * try return
-             */
+       * try{...}catch(e){...}finally{...} execution sequence:
+       * try stmt
+       * try throw
+       * catch stmt (if)
+       * finally stmt
+       *
+       * finally throw or finally return
+       * catch throw or catch return
+       * try return
+       */
       try {
         result = this.setValue(blockClosure())
         if (result instanceof Return) {
@@ -2231,8 +2231,7 @@ class Interpreter {
             if (result instanceof Return) {
               finalReturn = result
             }
-          }
-          catch (err) {
+          } catch (err) {
             reset()
             if (this.isInterruptThrow(err)) {
               throw err
@@ -2251,8 +2250,7 @@ class Interpreter {
             finalReturn = result
           }
           // finalReturn = finalizerClosure();
-        }
-        catch (err) {
+        } catch (err) {
           reset()
           if (this.isInterruptThrow(err)) {
             throw err
@@ -2451,7 +2449,7 @@ class Interpreter {
 
     return ()=>{
       let str = ''
-      for(let i=0;i<strs.length;i++) {
+      for(let i=0; i < strs.length; i++) {
         // use cooked or raw??
         str += (strs[i].value.cooked + (strs[i].tail ? '' : this.getString(vasGetters[i]())))
       }
@@ -2465,7 +2463,7 @@ class Interpreter {
     return () => {
       const data = closure()
       const MArray = this.globalScope.data['Array']
-      if(!Array.isArray(data)){
+      if (!Array.isArray(data)) {
         throw this.createInternalThrowError(Messages.NormalError, `spread node type not array`, node)
       }
       return data
@@ -2518,11 +2516,11 @@ class Interpreter {
     let superClass = node.superClass ? this.createClosure(node.superClass) : null
 
     node.body.body.forEach(item=>{
-      if(item.type === 'MethodDefinition'){
+      if (item.type === 'MethodDefinition') {
         // Focus on these attributes: kind/static/computed
-        if(item.kind === 'constructor'){
+        if (item.kind === 'constructor') {
           classDecl.cons = this.createClosure(item.value)
-        } else if(item.kind === 'method') {
+        } else if (item.kind === 'method') {
           classDecl[item.static?'static':'method'].push({
             name: {
               computed: item.computed,
@@ -2530,11 +2528,11 @@ class Interpreter {
             },
             value: this.createClosure(item.value)
           })
-        } else if(item.kind === 'get' || item.kind === 'set') {
+        } else if (item.kind === 'get' || item.kind === 'set') {
           // The setter and getter of the class are not supported
           throw this.createInternalThrowError(Messages.NormalError, 'not support getter and setter in class', node)
         }
-      } else if(item.type === 'FieldDefinition' || item.type === 'PropertyDefinition') {
+      } else if (item.type === 'FieldDefinition' || item.type === 'PropertyDefinition') {
 
         // Follow static/computed
         if (item.static) {
@@ -2574,7 +2572,7 @@ class Interpreter {
       let cons
       // If there is a parent class and there is a displayed constructor declaration,
       // the super variable should be injected when constructing the constructor
-      if(_super && classDecl.cons){
+      if (_super && classDecl.cons) {
         let newScope = createScope(this.getCurrentScope(), `FScope(constructor)`, 'block')
         newScope.lexDeclared = {
           super: {
@@ -2586,17 +2584,17 @@ class Interpreter {
         let prevScope = this.entryBlockScope(newScope)
         cons = classDecl.cons()
         this.setCurrentScope(prevScope)
-      }else{
+      } else {
         cons = classDecl.cons?classDecl.cons():null
       }
 
       let func = function(){
         let _this = this
-        if(superClass && !cons){
+        if (superClass && !cons) {
           _this = _super.call(_this) || _this
         }
         // Bind the field attribute first, and then execute the constructor
-        classDecl.fieldsArrow.forEach(item=>{
+        classDecl.fieldsArrow.forEach(item => {
           let prev = self.getCurrentContext()
           self.setCurrentContext(_this)
           let fn = item.value()
@@ -2609,7 +2607,7 @@ class Interpreter {
           setKeyVal(_this, item, item.value())
           // _this[item.name.computed?(item.name.value )():item.name.value] = item.value()
         })
-        if(cons){
+        if (cons) {
           cons.apply(_this, arguments)
         }
         return _this
@@ -2838,10 +2836,13 @@ class Interpreter {
   }
 
   entryBlockScope(newScope) {
+
     const prevScope = this.getCurrentScope()
+
     // When the function is executed, a new scope is created, and the next line
     // points the running pointer of the program to the new scope
     this.setCurrentScope(newScope)
+
     // blockScope does not need to assign new hoist variables
     // self.addDeclarationsToScope(declVars, declFuncs, currentScope);
     return prevScope
